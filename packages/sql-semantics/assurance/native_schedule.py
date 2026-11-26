@@ -183,6 +183,7 @@ NATIVE = {
     "mysql_signed_casts": "mysql-signed-casts-v2.json",
     "mysql_unsigned_casts": "mysql-unsigned-casts-v4.json",
     "mysql_unsigned_parameter": "mysql-unsigned-parameter-v1.json",
+    "mysql_named_parameter": "mysql-named-projected-markers-v2.json",
     "mysql_merged_join": "mysql-merged-join-v3.json",
     "mysql_from_list": "mysql-from-list-v1.json",
     "delete": "server-delete-v2.json",
@@ -386,6 +387,7 @@ SINGLE_ENGINE = {
     "mysql_signed_casts": "mysql",
     "mysql_unsigned_casts": "mysql",
     "mysql_unsigned_parameter": "mysql",
+    "mysql_named_parameter": "mysql",
     "mysql_merged_join": "mysql",
     "mysql_from_list": "mysql",
 }

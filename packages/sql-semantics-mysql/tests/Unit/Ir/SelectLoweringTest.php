@@ -7,6 +7,8 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Binding\ParameterName;
 use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
@@ -17,6 +19,7 @@ use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Testing\MySql\Inspection;
 
@@ -39,6 +42,22 @@ final class SelectLoweringTest extends TestCase
         $this->expectExceptionMessage('A complete projection supports ANSI_QUOTES and NO_BACKSLASH_ESCAPES lexical modes.');
 
         (new SelectLowering())->mode(new LexicalSettings('ANSI_QUOTES,PIPES_AS_CONCAT'));
+    }
+
+    public function testAnalyzeBindsNamedMarkerAndPreservesNativeInferredHeading(): void
+    {
+        $analyzer = new Semantics(parameters: ParameterStyle::Named);
+        $query = 'SELECT CAST(/* :arg */ (:arg) AS SIGNED)';
+        $heading = new Identifier('CAST(/* :arg */ (?) AS SIGNED)');
+        $direct = new Select([
+            new ResultColumn(new Parameter(1, name: new ParameterName('arg')), $heading),
+        ], release: $analyzer->profile()->grammar);
+        $analyzed = $analyzer->analyze($query);
+        [$batch] = $analyzer->analyzeAll($query);
+
+        self::assertEquals($direct, $analyzed);
+        self::assertEquals($direct, $batch);
+        self::assertSame('SELECT CAST(? AS SIGNED) AS `CAST(/* :arg */ (?) AS SIGNED)`', $analyzed->toString());
     }
 
     public function testAnalyzeBindsBothQuotedOccurrencesToTheSameField(): void

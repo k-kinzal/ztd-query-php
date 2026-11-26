@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Ir\Ordering\ProjectionColumns;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultLowering;
 use SqlSemantics\Platform\MySql\Ir\Predicate\PredicateLowering;
 use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
-use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
@@ -32,7 +31,6 @@ final class SelectLowering
     public function lower(BoundStatement $operation, ?ParsedSelect $operand = null): Select
     {
         $profile = $operation->context->profile;
-        Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
         $mode = $this->mode($profile->lexical);
         $statement = $operand ?? $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete MySQL IR currently supports a single projection SELECT.');

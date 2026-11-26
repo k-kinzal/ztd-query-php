@@ -80,7 +80,11 @@ function constructOperand(string $namespace, array $data): object
         'parameter' => match (true) {
             !isset($data[2]) => new $type($data[1]),
             $namespace === 'SqlSemantics\\Platform\\MySql\\Ir\\'
-                => new $type($data[1], SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::from($data[2])),
+                => new $type(
+                    $data[1],
+                    SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::from($data[2]),
+                    isset($data[3]) ? new SqlSemantics\Platform\MySql\Ir\Binding\ParameterName($data[3]) : null
+                ),
             default => new $type($data[1], $castTarget::from($data[2])),
         },
         'slot', 'text-slot', 'bool-slot', 'wide-slot', 'integral-slot' => new $type($data[1], $data[2] ?? 0),
@@ -155,6 +159,8 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'Predicate\\Text\\TextComparison' => ['text-comparison', $value->operator->value, $value->collation->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Binding\\Parameter' => match (true) {
+            $value instanceof SqlSemantics\Platform\MySql\Ir\Binding\Parameter && $value->name !== null
+                => ['parameter', $value->position, $value->target->value, $value->name->value],
             $value instanceof SqlSemantics\Platform\MySql\Ir\Binding\Parameter
                 && $value->target === SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Unsigned
                 => ['parameter', $value->position, $value->target->value],
@@ -325,7 +331,8 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
     if ($input['dialect'] === 'mysql' && isset($input['projectionMode'])) {
         $path = new $searchPath($input['currentDatabase'] ?? 'ir_fixture');
         $mode = SqlSemantics\Platform\MySql\Mode::fromString($input['projectionMode'] === 'empty' ? '' : $input['projectionMode']);
-        $semantics = new $class($input['release'], $mode, searchPath: $path);
+        $parameterStyle = SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle::from($input['mysqlParameterStyle'] ?? 'Native');
+        $semantics = new $class($input['release'], $mode, $parameterStyle, $path);
         $catalog = ($input['incompatibleProjectionContext'] ?? false) === true
             ? new $class($input['release'], searchPath: $path) : $semantics;
 

@@ -8,7 +8,7 @@ use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
 /**
- * A native projected parameter with a resolved integral cast.
+ * A native projected parameter with a resolved integral cast and external binding identity.
  *
  * @visibility public
  * @example Referring to the second bound position
@@ -19,11 +19,12 @@ final class Parameter
     use Snapshot;
 
     /**
-     * Fixes a one-based position and the native integer conversion.
+     * Fixes the local position, integer conversion and optional external name.
      */
     public function __construct(
         public readonly int $position,
         public readonly ParameterTarget $target = ParameterTarget::Signed,
+        public readonly ?ParameterName $name = null,
     ) {
         Check::input($position >= 1 && $position <= 1024, 'A parameter position must be between 1 and 1024.');
     }

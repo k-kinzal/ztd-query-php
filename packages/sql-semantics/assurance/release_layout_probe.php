@@ -172,6 +172,34 @@ function observeMysqlParameterTargets(SqlSemantics\Platform\MySql\Semantics $ana
     return [$analysis == $direct, $batch == $direct, $roles, $analysis->toString()];
 }
 
+function observeMysqlNamedParameterBindings(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(parameters: SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle::Named);
+    $input = 'SELECT CAST(/* :amount kept */ (:amount) AS SIGNED), CAST(? AS SIGNED) AS alternate, CAST(:amount AS UNSIGNED) AS original_value';
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $name = new SqlSemantics\Platform\MySql\Ir\Binding\ParameterName('amount');
+    $signed = SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Signed;
+    $unsigned = SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Unsigned;
+    $columns = [];
+    foreach ([
+        [$signed, $name, 'CAST(/* :amount kept */ (?) AS SIGNED)'],
+        [$signed, null, 'alternate'],
+        [$unsigned, $name, 'original_value'],
+    ] as $position => [$target, $key, $label]) {
+        $columns[] = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+            new SqlSemantics\Platform\MySql\Ir\Binding\Parameter($position + 1, $target, $key),
+            new SqlSemantics\Platform\MySql\Ir\Identifier($label),
+        );
+    }
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select($columns, release: $analyzer->profile()->grammar);
+    $sites = array_map(static fn ($column): array => [
+        $column->expression->position, $column->expression->target->value, $column->expression->name?->value,
+    ], $analyzed->columns);
+
+    return [$analyzed == $direct, $batch == $direct, $sites, $analyzed->toString()];
+}
+
 function observeMysqlNullableHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.having_rows (amount INT)']);
@@ -2718,6 +2746,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['projectionModes'] = observeMysqlProjectionModes($semantics);
             $details['verbatimProjection'] = observeMysqlVerbatimProjection();
             $details['unsignedParameters'] = observeMysqlParameterTargets($semantics);
+            $details['namedParameters'] = observeMysqlNamedParameterBindings();
             $value = $result->columns[0]->expression;
             if ($value::class !== $namespace . 'Ir\\Expression\\SignedCast'
                 || $value->operand::class !== $namespace . 'Ir\\IntegerLiteral') {

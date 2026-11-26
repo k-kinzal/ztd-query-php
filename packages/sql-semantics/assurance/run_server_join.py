@@ -153,6 +153,11 @@ def native_rejection_sql(domain, request, item):
     return domain.rejection_sql(item, request)
 
 
+def authored_native_sql(domain, item, authored):
+    elaborate = getattr(domain, "elaborate_authored_sql", None)
+    return authored if elaborate is None else elaborate(item, authored)
+
+
 def seed_ids(specification):
     exploration = specification["exploration"]
     budgets = (("seed", exploration["casesPerSeed"]), ("direct-seed", exploration.get("directCasesPerSeed", 0)))
@@ -235,9 +240,13 @@ def execute(args, specification, tag, worker, db, domain=None):
                     comparison = None
                     details = {"observation": actual}
                     if "sql" in current:
-                        original = domain.observation(db.request(domain.observer_request(item, current["sql"])))
-                        domain.check_observation(item, original, current["sql"])
+                        authored = current["sql"]
+                        reference = authored_native_sql(domain, item, authored)
+                        original = domain.observation(db.request(domain.observer_request(item, reference)))
+                        domain.check_observation(item, original, reference)
                         details["original"] = original
+                        if reference != authored:
+                            details["originalSql"] = reference
                     ledger.record(key, "compared", **details, **attempt_observation(started, seconds))
                     if key.startswith("finite/"):
                         seen[observe_finite_id(domain, args.engine, response, item, current)] += 1

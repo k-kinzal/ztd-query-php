@@ -14,7 +14,7 @@ from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, diges
 from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import attempt_batch_size, attempt_seconds, check_fault_obligations, checked_fault_plan, direct_identities, native_rejection_sql, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
+from run_server_join import attempt_batch_size, attempt_seconds, authored_native_sql, check_fault_obligations, checked_fault_plan, direct_identities, native_rejection_sql, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -75,7 +75,10 @@ def replay(path, report, specification, domain=run_server_join):
             domain.check_observation(item, witness, response["sql"])
             require(("sql" in request) == ("original" in compared), f"server-{label}-replay-original-missing", key)
             if "sql" in request:
-                domain.check_observation(item, domain.observation(compared["original"]), request["sql"])
+                authored = request["sql"]
+                reference = authored_native_sql(domain, item, authored)
+                same(reference if reference != authored else None, compared.get("originalSql"))
+                domain.check_observation(item, domain.observation(compared["original"]), reference)
             if key.startswith("finite/"):
                 seen[observe_finite_id(domain, engine, response, item, request)] += 1
             elif key.startswith("direct/") and observe_direct is not None:

@@ -253,6 +253,9 @@ if ($dialect === 'mysql') {
     $enumCases['Binding\\ProjectionMode'] = ['Empty' => 'empty', 'AnsiQuotes' => 'ANSI_QUOTES',
         'NoBackslashEscapes' => 'NO_BACKSLASH_ESCAPES', 'AnsiQuotesAndNoBackslashEscapes' => 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES'];
     $properties['Binding\\Parameter']['target'] = ['Binding\\ParameterTarget'];
+    $properties['Binding\\Parameter']['name'] = ['?Binding\\ParameterName'];
+    $properties['Binding\\ParameterName'] = ['value' => ['string']];
+    $methods['Binding\\ParameterName'] = ['__construct'];
     $properties['Binding\\ParameterTarget'] = $methods['Binding\\ParameterTarget'] = [];
     $enumCases['Binding\\ParameterTarget'] = ['Signed' => 'SIGNED', 'Unsigned' => 'UNSIGNED'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NullSafeEqual' => '<=>', 'NotEqual' => '<>',
@@ -2040,7 +2043,7 @@ try {
         ],
         'mysql' => [
             ['mysql-from-binding-v4.json', 'fd447b230609974fe86e5186477333fc99d878201f0492af5bad603ccc099179', 'MySQL FROM binding'],
-            ['mysql-text-literal-binding-v1.json', '9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329', 'MySQL text binding'],
+            ['mysql-text-literal-binding-v2.json', 'a44a8a00dad6a2f8a42ba1af65ac827afc5e37a9734f57ca07b503b3e8447379', 'MySQL text binding'],
             ['mysql-varchar-binding-v12.json', '476d7c462200be8970fab0d6ecab4ef360634cc02a77fe08adf37ba967d73d4b', 'MySQL VARCHAR binding'],
             ['mysql-ordered-table-rename-binding-v8.json', '0d625501589c80bbea2c8ccd7c713c6660e7c01114afbe29cf2b1f4df2d57083', 'MySQL ordered rename binding'],
             ['mysql-session-table-binding-v10.json', 'ce94adc2f6c417b28b5d769573cba6390309040d0ef90b9c38362f425ba6ddd2', 'MySQL session table binding'],
@@ -2765,6 +2768,7 @@ try {
             requireShape(
                 $call->name instanceof Name && (in_array($call->name->toString(), $pureFunctions, true)
                     || ($dialect === 'mysql' && $short === 'Schema\\View\\ViewDefiner' && $call->name->toString() === 'trim')
+                    || ($dialect === 'mysql' && $short === 'Binding\\ParameterLowering' && $call->name->toString() === 'substr')
                     || ($dialect === 'mysql' && $short === 'Ordering\\AliasHeading' && $call->name->toString() === 'substr')
                     || ($dialect === 'mysql' && $short === 'Schema\\ForeignKey\\Add\\ForeignKeyConstraintNamespace'
                         && in_array($call->name->toString(), ['in_array', 'max', 'str_starts_with', 'substr', 'strlen'], true))

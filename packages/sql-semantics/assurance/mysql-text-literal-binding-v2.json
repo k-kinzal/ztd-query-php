@@ -1,0 +1,34 @@
+{
+  "revision": "SemanticsIR/mysql-text-literal-binding-2",
+  "approval": "pending-human-review",
+  "artifacts": {
+    "src/Model/Contract/GrammarRelease.php": {
+      "sha256": "75eaec6d58f306bf1890ee56b000f36bade97e7a8e4a3c694311eb854b08e246",
+      "role": "Pin the release-to-collation lookup used by consumers of native utf8mb4 text."
+    },
+    "src/Rules/Strings.php": {
+      "sha256": "44a1eab0dbc55492e4b28facf38f5787e90505bab17236a62a88167035c3f10c",
+      "role": "Pin the lexical decoding rules for doubled delimiters and backslash escapes."
+    },
+    "src/Rules/Query/ItemNaming.php": {
+      "sha256": "e5bcecdd329e4ff18872b9ac402da44220e1f2e577c0c6a3611ecba82d46e786",
+      "role": "Pin the first decoded string segment rule and token-aware lowering of named marker spellings into native result headings. Preserve non-marker pieces and original trivia."
+    },
+    "src/Statement/Literal/StringLiteral.php": {
+      "sha256": "a6c83f1d43ad7fe5a4d3733a5ae1a6bc2daa706d08076e0dedce7d2bc1360b08",
+      "role": "Pin concatenation in source order and metadata used during lowering."
+    },
+    "src/Model/Rendering/Output.php": {
+      "sha256": "c9ab9fc88956f6fe678de289eee7d9404280b5967517a415781f922a6551f423",
+      "role": "Retain token kind, spelling and trivia of a layout during native name calculation."
+    },
+    "src/Model/Rendering/Lexical.php": {
+      "sha256": "e5517e3202861993a5c6272c6cfca6754946e4ad2f1bb61e50048e19abf0fad0",
+      "role": "Preserve the fixed spacing and token boundaries after replacing typed marker pieces."
+    }
+  },
+  "versionedFrom": {
+    "path": "mysql-text-literal-binding-v1.json",
+    "sha256": "9ae75f8c5ee63d23788c813d0552cc10fb12096133d4c76cc93321508a6f7329"
+  }
+}

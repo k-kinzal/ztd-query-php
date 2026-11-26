@@ -838,7 +838,8 @@ def inventory(root):
                     if postgres:
                         related[alternative] = (*related[alternative], "postgres-typed-parameters-v2.json")
                     if mysql:
-                        related[alternative] = (*related[alternative], "mysql-unsigned-parameter-v1.json")
+                        related[alternative] = (*related[alternative], "mysql-unsigned-parameter-v1.json",
+                                                "mysql-named-projected-markers-v2.json")
         local_signatures = {
             "table_factor: select_derived_init get_select_lex select_derived2",
             "table_factor: ( get_select_lex select_derived_union ) opt_table_alias",

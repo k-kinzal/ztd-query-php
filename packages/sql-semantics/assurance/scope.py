@@ -146,6 +146,7 @@ CONTRACTS = {
     "server-local-projection-v4.json": "dbbc9157fd7d3e8ec74967bfb483346aad4dfd65df353f3bf190731c0243cfb9",
     "server-parameter-v7.json": "a97e1308934d39ee916dd8b2323104a171d6b1325f38dd97a878b4c9fdbcce6b",
     "mysql-unsigned-parameter-v1.json": "e69ad881e0c723941395befbee798f2e3455f71bcca9b80cc10c51a475648103",
+    "mysql-named-projected-markers-v2.json": "11f2b4250f2a142de6d293297ac0466b09b3c03d4ce664ea8e0991ea314f08ca",
     "server-create-table-v2.json": "b1c5f91edac3d4be6e304600ba2b480ee45497fd51e84ee90597f13a8ec6911c",
     "postgres-create-text-v2.json": "3ace81b37a0399f31072f1a372e9487c08635f2be7bdf109a74d30d5da609e5c",
     "postgres-create-signed-defaults-v1.json": "ab925fa9e5bd654cb8b6e9b20b4dcff3eeac415322e0398ec6dfd4087b8236a6",

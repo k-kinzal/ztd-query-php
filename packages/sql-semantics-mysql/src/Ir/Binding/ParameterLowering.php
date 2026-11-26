@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Parameter as ParsedParameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 
 /**
- * Resolves a native marker in a projected integral cast.
+ * Resolves a named or anonymous marker in a projected integral cast.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -38,6 +38,10 @@ final class ParameterLowering
             $operand = $operand->operand;
         }
 
-        return $operand instanceof ParsedParameter && $operand->marker === '?' ? new Parameter($position, $target) : null;
+        if (!$operand instanceof ParsedParameter) {
+            return null;
+        }
+
+        return new Parameter($position, $target, $operand->marker === '?' ? null : new ParameterName(substr($operand->marker, 1)));
     }
 }

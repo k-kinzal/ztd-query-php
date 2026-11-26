@@ -6,10 +6,13 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Model\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Model\Rendering\Lexical;
 use SqlSemantics\Platform\MySql\Model\Rendering\Output;
+use SqlSemantics\Platform\MySql\Model\Rendering\Piece;
+use SqlSemantics\Platform\MySql\Model\Rendering\PieceKind;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Platform\MySql\Model\Statement\Reference\Missing\SessionState;
@@ -189,7 +192,19 @@ final class ItemNaming
      */
     public function text(SelectExpression $item): string
     {
-        return $item->layout?->text() ?? $this->canonical($item->expression);
+        if ($this->profile->parameters === ParameterStyle::Native) {
+            return $item->layout?->text() ?? $this->canonical($item->expression);
+        }
+
+        $out = new Output(new Codec($this->profile->grammar));
+        $out->layout($item->layout, $item->expression);
+        $native = [];
+        foreach ($out->pieces() as $piece) {
+            $marker = $piece->kind === PieceKind::Literal && preg_match('/\A:[A-Za-z0-9_]+\z/D', $piece->text) === 1;
+            $native[] = $marker ? new Piece($piece->kind, '?', $piece->glued, $piece->gap) : $piece;
+        }
+
+        return (new Lexical())->join($native);
     }
 
     /**
