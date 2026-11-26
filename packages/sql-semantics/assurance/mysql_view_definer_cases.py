@@ -108,8 +108,9 @@ def authored_failures(tag):
         yield "overwide-explicit-host-padding", ["actor", "\t" + "h" * host_limit + " "]
 
 
-def diagnostic_component(component, limit):
-    prefix = component.encode("utf-8")[:limit].decode("utf-8", errors="surrogateescape")
+def diagnostic_component(component, limit, legacy_prefix):
+    errors = "ignore" if legacy_prefix else "surrogateescape"
+    prefix = component.encode("utf-8")[:limit].decode("utf-8", errors=errors)
     return "".join("?" if "\udc80" <= character <= "\udcff" else character for character in prefix)
 
 

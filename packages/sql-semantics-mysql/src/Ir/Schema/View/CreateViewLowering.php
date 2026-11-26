@@ -6,14 +6,10 @@ namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
 
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
-use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Model\Facade\BoundStatement;
 use SqlSemantics\Platform\MySql\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
 use SqlSemantics\Platform\MySql\Statement\Query\Select as ParsedSelect;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView as ParsedCreateView;
@@ -28,7 +24,6 @@ final class CreateViewLowering
 {
     /**
      * Binds the external identity and the catalog-visible position names.
-     * @throws InvalidConstruction When a definer cannot resolve to a known account form
      */
     public function lower(BoundStatement $operation, ParsedCreateView $statement): CreateView
     {
@@ -59,19 +54,6 @@ final class CreateViewLowering
             ParsedViewCheckOption::Unqualified, ParsedViewCheckOption::Cascaded => ViewCheckOption::Cascaded,
         };
 
-        $account = $definition->definer;
-        if ($account instanceof AccountName && $account->host !== null
-            && ($query->release === GrammarRelease::MySql5651 || $query->release === GrammarRelease::MySql5744)) {
-            $maximum = $query->release === GrammarRelease::MySql5651 ? 16 : 32;
-            Check::input(preg_match('/\A.{0,' . $maximum . '}\z/usD', $account->user->value) === 1, 'An explicit MySQL definer user exceeds the native character limit of this release.');
-            Check::input(strlen($account->host->value) <= 60, 'A MySQL 5.6 or 5.7 view definer host permits at most 60 bytes.');
-        }
-        $definer = match (true) {
-            $account === null, $account instanceof CurrentUser => null,
-            $account instanceof AccountName => new ViewDefiner($account->user->value, $account->host->value ?? '%'),
-            default => throw new InvalidConstruction('A view definer must select the current user or a named account.'),
-        };
-
         return new CreateView(
             $name,
             $query,
@@ -80,7 +62,7 @@ final class CreateViewLowering
             ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'),
             ViewSecurity::from($definition->security->value ?? 'DEFINER'),
             $check,
-            $definer
+            (new ViewDefinerLowering())->lower($definition->definer, $query->release)
         );
     }
 }

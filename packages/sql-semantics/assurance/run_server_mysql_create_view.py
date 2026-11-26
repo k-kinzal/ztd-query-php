@@ -18,8 +18,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v12.json"
-CONTRACT = "7a2c8fdb56692de49ee541472de2e9226049fceb6c626c3b889ad272a45eb788"
+CONTRACT_NAME = "mysql-create-view-v13.json"
+CONTRACT = "9bb9c00573f92c8dfcb3fc0d885729e127e6a7fd509fd1fd6de29b4520f3a587"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
@@ -584,7 +584,8 @@ def prediction(item):
         absent = principal is not None and principal != definers.GRANTED and principal not in definers.UNPRIVILEGED
         if absent:
             width = specifications()[0]["definerDiagnostic"]
-            user, host = (definers.diagnostic_component(part, width["componentBytes"]) for part in principal)
+            legacy = item["release"] in width["legacyPrefixReleases"]
+            user, host = (definers.diagnostic_component(part, width["componentBytes"], legacy) for part in principal)
             diagnostics.append([width["level"], width["code"], f"The user specified as a definer ('{user}'@'{host}') does not exist"])
         for state in (initial, after, later):
             for record in state["views"].values():
