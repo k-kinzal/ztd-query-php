@@ -19,6 +19,8 @@ function projectionModeObservation(PDO $pdo, array $request): array
     $active = match ($request['mode']) {
         'empty' => '',
         'ANSI_QUOTES' => 'ANSI_QUOTES',
+        'NO_BACKSLASH_ESCAPES' => 'NO_BACKSLASH_ESCAPES',
+        'ANSI_QUOTES,NO_BACKSLASH_ESCAPES' => 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES',
     };
     $pdo->exec('SET SESSION sql_mode=' . $pdo->quote($active));
     $mode = $pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();

@@ -15,6 +15,6 @@ final class ProjectionModeTest extends TestCase
 {
     public function testCasesIdentifyTheCheckedSqlModes(): void
     {
-        self::assertSame(['empty', 'ANSI_QUOTES'], array_column(ProjectionMode::cases(), 'value'));
+        self::assertSame(['empty', 'ANSI_QUOTES', 'NO_BACKSLASH_ESCAPES', 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES'], array_column(ProjectionMode::cases(), 'value'));
     }
 }

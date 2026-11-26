@@ -114,7 +114,7 @@ NATIVE = {
     "mysql_signed_projection_alias": "mysql-signed-projection-alias-v1.json",
     "mysql_signed_quotient": "mysql-signed-quotient-v1.json",
     "mysql_text_literal": "mysql-text-literal-v1.json",
-    "mysql_ansi_projection": "mysql-ansi-projection-v2.json",
+    "mysql_ansi_projection": "mysql-ansi-projection-v3.json",
     "mysql_varchar_slots": "mysql-varchar-slots-v2.json",
     "mysql_external_views": "mysql-external-views-v1.json",
     "mysql_external_view_read_names": "mysql-external-view-read-names-v3.json",

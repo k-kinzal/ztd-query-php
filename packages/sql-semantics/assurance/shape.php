@@ -248,8 +248,10 @@ if ($dialect === 'mysql') {
     $methods['From\\ExternalRelationKind'] = ['isTable'];
     $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
     $properties['Select']['mode'] = ['Binding\\ProjectionMode'];
-    $properties['Binding\\ProjectionMode'] = $methods['Binding\\ProjectionMode'] = [];
-    $enumCases['Binding\\ProjectionMode'] = ['Empty' => 'empty', 'AnsiQuotes' => 'ANSI_QUOTES'];
+    $properties['Binding\\ProjectionMode'] = [];
+    $methods['Binding\\ProjectionMode'] = ['escapesBackslash'];
+    $enumCases['Binding\\ProjectionMode'] = ['Empty' => 'empty', 'AnsiQuotes' => 'ANSI_QUOTES',
+        'NoBackslashEscapes' => 'NO_BACKSLASH_ESCAPES', 'AnsiQuotesAndNoBackslashEscapes' => 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES'];
     $properties['Binding\\Parameter']['target'] = ['Binding\\ParameterTarget'];
     $properties['Binding\\ParameterTarget'] = $methods['Binding\\ParameterTarget'] = [];
     $enumCases['Binding\\ParameterTarget'] = ['Signed' => 'SIGNED', 'Unsigned' => 'UNSIGNED'];
@@ -2860,7 +2862,7 @@ try {
             $operators = [];
             foreach ($class->stmts as $case) {
                 if ($case instanceof Stmt\ClassMethod && (
-                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyStringKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyScalarKind'], true))
+                    ($dialect === 'mysql' && in_array($short, ['Schema\\IntegerStorage', 'Schema\\Index\\IndexRole', 'From\\ExternalRelationKind', 'From\\ColumnKind', 'Binding\\ProjectionMode', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyStringKind', 'Schema\\ForeignKey\\Add\\Domain\\ForeignKeyScalarKind'], true))
                     || ($dialect === 'postgres' && $short === 'Schema\\Sequence\\SequencePersistence')
                 )) {
                     continue;

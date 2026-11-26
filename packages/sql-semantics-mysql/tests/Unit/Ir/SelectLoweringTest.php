@@ -30,13 +30,15 @@ final class SelectLoweringTest extends TestCase
 
         self::assertSame(ProjectionMode::Empty, $lowering->mode(new LexicalSettings()));
         self::assertSame(ProjectionMode::AnsiQuotes, $lowering->mode(new LexicalSettings('ANSI_QUOTES')));
+        self::assertSame(ProjectionMode::NoBackslashEscapes, $lowering->mode(new LexicalSettings('NO_BACKSLASH_ESCAPES')));
+        self::assertSame(ProjectionMode::AnsiQuotesAndNoBackslashEscapes, $lowering->mode(new LexicalSettings('NO_BACKSLASH_ESCAPES,ANSI_QUOTES')));
     }
 
     public function testModeRefusesAnUnrepresentedCombination(): void
     {
-        $this->expectExceptionMessage('A complete projection requires either empty sql_mode or ANSI_QUOTES.');
+        $this->expectExceptionMessage('A complete projection supports ANSI_QUOTES and NO_BACKSLASH_ESCAPES lexical modes.');
 
-        (new SelectLowering())->mode(new LexicalSettings('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
+        (new SelectLowering())->mode(new LexicalSettings('ANSI_QUOTES,PIPES_AS_CONCAT'));
     }
 
     public function testAnalyzeBindsBothQuotedOccurrencesToTheSameField(): void

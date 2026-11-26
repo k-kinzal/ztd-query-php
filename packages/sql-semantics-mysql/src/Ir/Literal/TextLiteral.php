@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Literal;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Snapshot;
 
@@ -27,10 +28,14 @@ final class TextLiteral
     }
 
     /**
-     * Emits a plain quoted literal under empty sql_mode and the fixed utf8mb4 connection.
+     * Emits the decoded value under its owner's escape rule and utf8mb4 connection.
      */
-    public function toString(): string
+    public function toString(ProjectionMode $mode = ProjectionMode::Empty): string
     {
+        if (!$mode->escapesBackslash()) {
+            return "'" . str_replace("'", "''", $this->value) . "'";
+        }
+
         return "'" . strtr($this->value, [
             '\\' => '\\\\', "'" => "''", "\0" => '\\0', "\x08" => '\\b', "\t" => '\\t',
             "\n" => '\\n', "\r" => '\\r', "\x1a" => '\\Z',

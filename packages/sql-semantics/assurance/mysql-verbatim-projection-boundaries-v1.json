@@ -1,0 +1,138 @@
+{
+  "revision": "SemanticsIR/mysql-verbatim-projection-boundaries/1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-ansi-projection-v3.json",
+  "rules": {
+    "Binding/ProjectionMode::escapesBackslash": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match ($this) {",
+        "    self::Empty, self::AnsiQuotes => true,",
+        "    self::NoBackslashEscapes, self::AnsiQuotesAndNoBackslashEscapes => false,",
+        "};"
+      ]
+    },
+    "SelectLowering::mode": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty,",
+        "    $lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings('ANSI_QUOTES')) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::AnsiQuotes,",
+        "    $lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings('NO_BACKSLASH_ESCAPES')) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::NoBackslashEscapes,",
+        "    $lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings('ANSI_QUOTES,NO_BACKSLASH_ESCAPES')) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::AnsiQuotesAndNoBackslashEscapes,",
+        "    default => throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('A complete projection supports ANSI_QUOTES and NO_BACKSLASH_ESCAPES lexical modes.'),",
+        "};"
+      ]
+    },
+    "Literal/TextLiteral::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if (!$mode->escapesBackslash()) {",
+        "    return \"'\" . str_replace(\"'\", \"''\", $this->value) . \"'\";",
+        "}",
+        "return \"'\" . strtr($this->value, ['\\\\' => '\\\\\\\\', \"'\" => \"''\", \"\\x00\" => '\\0', \"\\x08\" => '\\b', \"\\t\" => '\\t', \"\\n\" => '\\n', \"\\r\" => '\\r', \"\\x1a\" => '\\Z']) . \"'\";"
+      ]
+    },
+    "Literal/TextLiteralLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if (!$expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\StringLiteral) {",
+        "    return null;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($expression->introducer === null && !$expression->national, 'A text literal requires the plain utf8mb4 projection role.');",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral($expression->value());"
+      ]
+    },
+    "SelectSql::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        ""
+      ]
+    },
+    "SelectSql::render": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$expressions = new self($select->mode);",
+        "$source = $select->source;",
+        "$items = [];",
+        "foreach ($select->columns as $slot => $column) {",
+        "    $name = $viewNames[$slot] ?? $column->name;",
+        "    $label = $name->value;",
+        "    $retain = $retainRequested && $name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias;",
+        "    $intrinsic = $label !== ltrim($label, \"\\x00.. \u007f\");",
+        "    if ($localNames && !$retain) {",
+        "        $alias = ' AS ' . $this->localColumn($slot);",
+        "    } elseif ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\IntrinsicIntegerName || $intrinsic) {",
+        "        $alias = '';",
+        "    } elseif ($name instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\RequestedResultAlias) {",
+        "        $alias = ' AS ' . $name->aliasSql();",
+        "    } else {",
+        "        $alias = ' AS ' . $name->quoted();",
+        "    }",
+        "    if ($intrinsic) {",
+        "        $items[] = $expressions->projectionOperand($column, $source, $name) . $alias;",
+        "        continue;",
+        "    }",
+        "    $items[] = $expressions->expression($column->expression, $source) . $alias;",
+        "}",
+        "$sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);",
+        "if ($source !== null) {",
+        "    $sql .= ' FROM ' . $expressions->from($source);",
+        "} elseif ($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $select->orderBy !== []) {",
+        "    $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';",
+        "} elseif (($select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $select->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744) && ($select->where !== null || $select->orderBy !== [] || $select->limit !== null)) {",
+        "    $sql .= ' FROM DUAL';",
+        "}",
+        "if ($select->where !== null) {",
+        "    $sql .= ' WHERE ' . $expressions->predicate($select->where, $source);",
+        "}",
+        "return $sql . (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultSql())->render($select);"
+      ]
+    },
+    "SelectSql::expression": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\IntegralColumnReference, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference => $this->column($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic => '(' . $this->expression($expression->left, $source, $offset, $qualify) . ' ' . $expression->operator->value . ' ' . $this->expression($expression->right, $source, $offset, $qualify) . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Truth\\TruthTest => $this->truthTest($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\Choice\\SignedCase => $this->signedCase($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS SIGNED)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\UnsignedCast => 'CAST(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' AS UNSIGNED)',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerComparison => $this->integerComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerMembership => $this->integerMembership($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange => $this->integerRange($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\NullTest => $this->predicate($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Text\\TextComparison => $this->textComparison($expression, $source, $offset, $qualify),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText => '(' . $this->expression($expression->operand, $source, $offset, $qualify) . ' COLLATE ' . $expression->collation->value . ')',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\RangeIntegerLiteral, $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral => $expression->toString($this->mode),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral => 'NULL',",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter => $expression->toString(),",
+        "    $expression instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',",
+        "};"
+      ]
+    }
+  }
+}

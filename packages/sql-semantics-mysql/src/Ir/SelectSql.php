@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir;
 
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\Expression\SignedCast;
@@ -40,11 +41,19 @@ final class SelectSql
     private const SOURCE_ALIAS = '`__ztd_source`';
 
     /**
+     * Selects the lexical rule for rendering individual expressions and predicates.
+     */
+    public function __construct(private readonly ProjectionMode $mode = ProjectionMode::Empty)
+    {
+    }
+
+    /**
      * Renders the result columns in order, then the optional source and filter.
      * @param list<Identifier|RequestedResultAlias> $viewNames Names checked by a persistent view with an inferred heading
      */
     public function render(Select $select, bool $localNames = false, bool $retainRequested = false, array $viewNames = []): string
     {
+        $expressions = new self($select->mode);
         $source = $select->source;
         $items = [];
         foreach ($select->columns as $slot => $column) {
@@ -62,14 +71,14 @@ final class SelectSql
                 $alias = ' AS ' . $name->quoted();
             }
             if ($intrinsic) {
-                $items[] = $this->projectionOperand($column, $source, $name) . $alias;
+                $items[] = $expressions->projectionOperand($column, $source, $name) . $alias;
                 continue;
             }
-            $items[] = $this->expression($column->expression, $source) . $alias;
+            $items[] = $expressions->expression($column->expression, $source) . $alias;
         }
         $sql = ($select->distinct ? 'SELECT DISTINCT ' : 'SELECT ') . implode(', ', $items);
         if ($source !== null) {
-            $sql .= ' FROM ' . $this->from($source);
+            $sql .= ' FROM ' . $expressions->from($source);
         } elseif ($select->release === GrammarRelease::MySql5651 && $select->orderBy !== []) {
             $sql .= ' FROM (SELECT 1 AS `__ztd_unit`) AS `__ztd_single`';
         } elseif (($select->release === GrammarRelease::MySql5651 || $select->release === GrammarRelease::MySql5744)
@@ -77,7 +86,7 @@ final class SelectSql
             $sql .= ' FROM DUAL';
         }
         if ($select->where !== null) {
-            $sql .= ' WHERE ' . $this->predicate($select->where, $source);
+            $sql .= ' WHERE ' . $expressions->predicate($select->where, $source);
         }
 
         return $sql . (new ResultSql())->render($select);
@@ -143,7 +152,8 @@ final class SelectSql
             $expression instanceof TextComparison => $this->textComparison($expression, $source, $offset, $qualify),
             $expression instanceof CollatedText => '(' . $this->expression($expression->operand, $source, $offset, $qualify)
                 . ' COLLATE ' . $expression->collation->value . ')',
-            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof ProjectedIntegerLiteral, $expression instanceof TextLiteral => $expression->toString(),
+            $expression instanceof IntegerLiteral, $expression instanceof RangeIntegerLiteral, $expression instanceof ProjectedIntegerLiteral => $expression->toString(),
+            $expression instanceof TextLiteral => $expression->toString($this->mode),
             $expression instanceof NullLiteral => 'NULL',
             $expression instanceof Parameter => $expression->toString(),
             $expression instanceof BooleanLiteral => $expression->value ? 'TRUE' : 'FALSE',

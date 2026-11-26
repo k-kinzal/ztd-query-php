@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Ir\Literal;
 use SqlSemantics\Platform\MySql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Model\Statement\Scalar;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 
 /**
@@ -29,7 +28,7 @@ final class TextLiteralLowering
             return null;
         }
         Check::input(
-            $expression->introducer === null && !$expression->national && $expression->escapes === EscapeRule::Backslash,
+            $expression->introducer === null && !$expression->national,
             'A text literal requires the plain utf8mb4 projection role.'
         );
 

@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral;
 
 #[CoversClass(TextLiteral::class)]
@@ -27,5 +28,13 @@ final class TextLiteralTest extends TestCase
         $this->expectExceptionMessage('A MySQL text literal requires valid UTF-8.');
 
         new TextLiteral("\xff");
+    }
+
+    public function testVerbatimModeDoublesOnlyTheQuoteDelimiter(): void
+    {
+        $literal = new TextLiteral("x\\'\0\n棚😀");
+
+        self::assertSame("'x\\''\0\n棚😀'", $literal->toString(ProjectionMode::NoBackslashEscapes));
+        self::assertSame("'x\\''\0\n棚😀'", $literal->toString(ProjectionMode::AnsiQuotesAndNoBackslashEscapes));
     }
 }

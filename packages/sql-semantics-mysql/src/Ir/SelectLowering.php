@@ -75,7 +75,9 @@ final class SelectLowering
         return match (true) {
             $lexical->equals(new LexicalSettings()) => ProjectionMode::Empty,
             $lexical->equals(new LexicalSettings('ANSI_QUOTES')) => ProjectionMode::AnsiQuotes,
-            default => throw new InvalidConstruction('A complete projection requires either empty sql_mode or ANSI_QUOTES.'),
+            $lexical->equals(new LexicalSettings('NO_BACKSLASH_ESCAPES')) => ProjectionMode::NoBackslashEscapes,
+            $lexical->equals(new LexicalSettings('ANSI_QUOTES,NO_BACKSLASH_ESCAPES')) => ProjectionMode::AnsiQuotesAndNoBackslashEscapes,
+            default => throw new InvalidConstruction('A complete projection supports ANSI_QUOTES and NO_BACKSLASH_ESCAPES lexical modes.'),
         };
     }
 }

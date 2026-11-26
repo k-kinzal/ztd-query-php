@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v212.json"
-CONTRACT = "354a2df76e9f017eeccb2dbe38fac3dbd8ca30d91c144c99e050a8c79d78838c"
+CONTRACT_NAME = "release-layout-v213.json"
+CONTRACT = "b737f5b8505e87b69ef2b55f5ba5cf7731ac922bd7bcc54a2b77afa3210e98c9"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -647,6 +647,10 @@ def verify_probe(raw, catalog):
                 "SELECT `__ztd_source`.`id` AS `first_value`, `__ztd_source`.`id` AS `second_value` FROM `app`.`lexical_rows` AS `__ztd_source`",
                 [[0, 0], [0, 0]], profile + "empty" + suffix, "id", "SELECT 'id' AS `first_value`",
             ], "installed-mysql-projection-mode-mismatch", item)
+            require(item.get("verbatimProjection") == [
+                True, True, profile + "ANSI_QUOTES,NO_BACKSLASH_ESCAPES" + suffix,
+                "a\\nb'c\0棚", "SELECT 'a\\nb''c\0棚' AS `sample`",
+            ], "installed-mysql-verbatim-projection-mismatch", item)
             require(item.get("unsignedParameters") == [
                 True, True, [[1, "SIGNED"], [2, "UNSIGNED"]],
                 "SELECT CAST(? AS SIGNED) AS `signed_input`, CAST(? AS UNSIGNED) AS `unsigned_input`",

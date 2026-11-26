@@ -5,6 +5,7 @@ import json
 import random
 import sys
 
+import mysql_projection_text_modes as text_modes
 from run import TOOL, Failure, digest, require
 from run_server import CONTRACT as PROJECTION, rejects, same
 from run_server_join import main, probe
@@ -13,7 +14,7 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-ansi-projection"
 OBSERVER = "mysql_projection_mode_observer.php"
-CONTRACT = "0eb5e00d4de4fee36c24ce5d97ee8a01db99018a98742ab47107e411f7f7c825"
+CONTRACT = "264a8151cbe356593440b066a237a6bdcc0e09970ded171dc4fe5691cc878188"
 DIAGNOSTIC = "SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\"
 COMPLETE_SEEDS = True
 GRAPH = ("source", "columns", "where", "distinct", "orderBy", "limit")
@@ -21,9 +22,11 @@ MARKS = {"ordinary": "a", "quote": 'a"', "backtick": "a`"}
 
 
 def specifications():
-    path, projection = TOOL / "mysql-ansi-projection-v2.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "mysql-ansi-projection-v3.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "mysql-ansi-projection-contract-mismatch")
     spec = json.loads(path.read_text())
+    prior = spec["versionedFrom"]
+    same(prior["sha256"], digest(TOOL / prior["path"]))
     profiles = {"mysql": json.loads(projection.read_text())["profiles"]["mysql"]}
     require(spec["releases"] == profiles["mysql"]["releases"], "mysql-ansi-projection-release-scope")
     return spec, profiles
@@ -89,7 +92,11 @@ def finite_ids(_, spec, _tag):
                    for mode in bounds["mode"] for slots in bounds["slots"]
                    for name in bounds["labels"] for unique in bounds["distinct"]}
     require(len(coordinates) == bounds["identities"], "mysql-ansi-projection-finite-domain")
-    return coordinates
+    additional = {(mode, slots, label, unique) for _, slots, label, unique in coordinates
+                  for mode in spec["additionalFinite"]["modes"]}
+    require(len(additional) == spec["additionalFinite"]["identities"] and not (additional & coordinates),
+            "mysql-verbatim-reference-domain")
+    return coordinates | additional | text_modes.literal_coordinates(spec)
 
 
 def observed_mode(profile):
@@ -97,6 +104,10 @@ def observed_mode(profile):
 
 
 def finite_id(_, actual, _item):
+    leaf = actual["local"]["definition"] if "local" in actual else actual
+    if len(leaf["columns"]) == 1 and leaf["columns"][0][0][0] == "text":
+        placement = "local" if "local" in actual else "plain"
+        return "text", observed_mode(actual["profile"]), leaf["columns"][0][0][1], placement
     slots = tuple(operand[1] for operand, _ in actual["columns"])
     names = [name for name, prefix in MARKS.items()
              if [label for _, label in actual["columns"]] == [prefix + str(i) for i in range(len(slots))]]
@@ -178,18 +189,43 @@ def negative_cases(tag, spec):
                                             "incompatibleProjectionContext": True, "declarations": []}, {
         "exception": DIAGNOSTIC + "InvalidConstruction", "message": "The context must match the selected language profile."
     }
+    verbatim = select(tag, text_modes.BACKSLASH_FREE, [[["text", r"a\nb"], "value"]], None)
+    signed_verbatim = select(tag, text_modes.BACKSLASH_FREE, literal, None)
+    joined = {"kind": "CROSS", "left": {"derived": signed_verbatim}, "right": {"derived": ordinary}, "on": None}
+    yield "mixed-verbatim-derived", {**verbatim, "source": joined}, {
+        "exception": DIAGNOSTIC + "InvalidConstruction", "message": "A derived input must use its owning SELECT lexical mode."
+    }
+    yield "mixed-verbatim-compound", {**base(tag, text_modes.BACKSLASH_FREE), "compound": {"left": verbatim, "right": ordinary,
+                                                                                      "operator": "UNION", "all": True}}, {
+        "exception": DIAGNOSTIC + "InvalidConstruction", "message": "Compound operands must have the same language profile."
+    }
 
 
 def requests(_, tag, spec):
     bounds = spec["finite"]
-    for index, parts in enumerate(product(*(bounds[key] for key in bounds["order"]))):
-        item = finite(tag, spec, *parts)
+    partitions = (product(*(bounds[key] for key in bounds["order"])),
+                  product(spec["additionalFinite"]["modes"], *(bounds[key] for key in bounds["order"][1:])))
+    index = 0
+    for partition in partitions:
+        for parts in partition:
+            item = finite(tag, spec, *parts)
+            yield f"finite/{index}", item, item, None
+            index += 1
+    for mode, value, placement in text_modes.literal_grid(spec):
+        item = select(tag, mode, [[["text", value], "value"]], None)
+        if placement == "local":
+            item = local(item, [[0, "value"]])
         yield f"finite/{index}", item, item, None
+        index += 1
     for key, request, item in analysis_cases(tag, spec):
+        yield f"analysis/{key}", request, item, None
+    for key, request, item in text_modes.analyzed(tag, spec, base, declarations):
         yield f"analysis/{key}", request, item, None
     for seed in spec["exploration"]["seeds"]:
         for i, item in enumerate(seeded(tag, spec, seed)):
             yield f"seed/{seed}/{i}", item, item, None
+        for i, item in enumerate(text_modes.seeded(tag, spec, seed, select, local, source(spec))):
+            yield f"direct-seed/{seed}/{i}", item, item, None
     negatives = list(negative_cases(tag, spec))
     require([row[0] for row in negatives] == spec["negative"], "mysql-ansi-projection-negative-scope")
     for key, request, boundary in negatives:
@@ -227,6 +263,14 @@ def check_value(item, reply):
         same(["id", "peer"], reply["source"]["columns"])
     elif item["example"] == "typed-parameters":
         same([["parameter", 1], ["parameter", 2], ["parameter", 3]], [operand for operand, _ in reply["columns"]])
+    elif "textAnalysisTerms" in item:
+        if "compound" in reply:
+            nodes = [reply["compound"][arm] for arm in ("left", "right")]
+        else:
+            nodes = [reply]
+        same(item["textAnalysisTerms"], [operand for node in nodes for operand, _ in node["columns"]])
+        if item["example"] == "verbatim-ansi-column":
+            same({"schema": "ir_fixture", "table": "mode_rows", "columns": ["peer"]}, reply["source"])
 
 
 def rowset(item, data):
@@ -264,20 +308,31 @@ def check_observation(item, actual, sql):
 
 
 def required_forms(*_):
-    return {"mode/empty", "mode/ANSI_QUOTES", "depth/0", "depth/4", "quote", "backtick", "literal",
-            "distinct/False", "distinct/True", *(f"slot/{slot}" for slot in range(4))}
+    return {"mode/empty", "mode/ANSI_QUOTES", f"mode/{text_modes.BACKSLASH_FREE}", f"mode/{text_modes.VERBATIM_ANSI}",
+            "quote", "backtick", "literal", "distinct/False", "distinct/True", *(f"slot/{slot}" for slot in range(4)),
+            *(f"depth/{depth}" for depth in range(5)), "verbatim-backslash", "verbatim-quote", "verbatim-nul",
+            "verbatim-control", "verbatim-supplementary", "read-reordered"}
 
 
 def sample_forms(forms, reply, _engine, _item):
     forms[f"mode/{observed_mode(reply['profile'])}"] += 1
     leaf, depth = reply, 0
     while "local" in leaf:
+        positions = [slot for slot, _ in leaf["local"]["columns"]]
+        if positions != sorted(positions):
+            forms["read-reordered"] += 1
         leaf = leaf["local"]["definition"]
         depth += 1
     forms[f"depth/{depth}"] += 1
     forms[f"distinct/{leaf['distinct']}"] += 1
     for operand, name in leaf["columns"]:
         forms["literal" if operand[0] == "text" else f"slot/{operand[1]}"] += 1
+        if operand[0] == "text" and text_modes.BACKSLASH_FREE in observed_mode(reply["profile"]):
+            for feature, present in (("backslash", "\\" in operand[1]), ("quote", "'" in operand[1]),
+                                     ("nul", "\0" in operand[1]), ("control", any(c in "\n\t\x1a" for c in operand[1])),
+                                     ("supplementary", any(ord(c) > 0xffff for c in operand[1]))):
+                if present:
+                    forms[f"verbatim-{feature}"] += 1
         if '"' in name:
             forms["quote"] += 1
         if "`" in name:
@@ -338,6 +393,7 @@ def faults(_, tag):
     spec, _ = specifications()
     root = "sql-semantics-mysql/src/Ir/"
     item = finite(tag, spec, "ANSI_QUOTES", [2], "quote", False)
+    verbatim = select(tag, text_modes.VERBATIM_ANSI, [[["text", "a\\n'b"], "value"]], None)
     _, mixed, reason = next(negative_cases(tag, spec))
     return [
         RenderFault("detach-mode-from-profile", root + "Select.php", "$this->mode->value", "'empty'", item,
@@ -351,6 +407,13 @@ def faults(_, tag):
                     "=> $this->column($expression, $source, $offset, $qualify),",
                     "=> (new TextLiteral($this->column($expression, $source, $offset, $qualify)))->toString(),",
                     item, "meaning-mismatch"),
+        RenderFault("apply-backslash-escaping-in-verbatim-mode", root + "SelectSql.php",
+                    "$expression instanceof TextLiteral => $expression->toString($this->mode),",
+                    "$expression instanceof TextLiteral => $expression->toString(ProjectionMode::Empty),", verbatim,
+                    "meaning-mismatch"),
+        RenderFault("double-verbatim-single-quote-as-backslash-escape", root + "Literal/TextLiteral.php",
+                    '''str_replace("'", "''", $this->value)''', r'''str_replace("'", "\\''", $this->value)''', verbatim,
+                    "meaning-mismatch"),
     ]
 
 

@@ -111,6 +111,27 @@ function observeMysqlWithMode(): array
         $analyzed->body->definition, $analyzed->toString()];
 }
 
+function observeMysqlVerbatimProjection(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(
+        mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true, noBackslashEscapes: true),
+    );
+    $input = "SELECT 'a\\n' 'b''c\0棚' AS \"sample\"";
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $value = "a\\nb'c\0棚";
+    $column = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+        new SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral($value),
+        new SqlSemantics\Platform\MySql\Ir\Identifier('sample'),
+    );
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select(
+        [$column], release: $analyzer->profile()->grammar,
+        mode: SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotesAndNoBackslashEscapes,
+    );
+
+    return [$direct == $analyzed, $direct == $batch, $analyzed->profileId(), $analyzed->columns[0]->expression->value, $analyzed->toString()];
+}
+
 function observeMysqlParameterTargets(SqlSemantics\Platform\MySql\Semantics $analyzer): array
 {
     $input = 'SELECT CAST(? AS SIGNED) AS signed_input, CAST((?) AS UNSIGNED INTEGER) AS unsigned_input';
@@ -2670,6 +2691,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'MySql' && $role === 'Select') {
             $details['projectionModes'] = observeMysqlProjectionModes($semantics);
+            $details['verbatimProjection'] = observeMysqlVerbatimProjection();
             $details['unsignedParameters'] = observeMysqlParameterTargets($semantics);
             $value = $result->columns[0]->expression;
             if ($value::class !== $namespace . 'Ir\\Expression\\SignedCast'
