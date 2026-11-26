@@ -64,11 +64,11 @@ def verbatim_finite(tag, mode, literal, nested, selection):
 
 def finite_ids(_, spec, _tag):
     limits = spec["finite"]
-    expected = {(count, selection, target, labels) for count in limits["definitions"]
+    expected = {("ansi", count, selection, target, labels) for count in limits["definitions"]
                 for selection in limits["slotSelection"] for target in limits["read"] for labels in limits["labels"]}
     require(len(expected) == limits["identities"], "mysql-ansi-with-finite-domain")
     text = spec["verbatimFinite"]
-    lexical = {(mode, value, nested, selection) for mode in text["modes"] for value in text["utf8"]
+    lexical = {("verbatim", mode, value, nested, selection) for mode in text["modes"] for value in text["utf8"]
                for nested in text["nested"] for selection in text["slotSelection"]}
     require(len(lexical) == text["identities"] and not (expected & lexical), "mysql-verbatim-with-finite-domain")
     return expected | lexical
@@ -84,9 +84,9 @@ def finite_id(_, response, _item):
         leaf = node["with"]["definitions"][0][1] if nested else node
         require(leaf["columns"][0][0][0] == "text" and position == 0, "mysql-verbatim-with-literal-kind", response)
         mode = response["profile"].split("/sql-mode=", 1)[1].split("/", 1)[0]
-        return mode, leaf["columns"][0][0][1], nested, "rotate" if columns[1][0] == 1 else "repeat"
+        return "verbatim", mode, leaf["columns"][0][0][1], nested, "rotate" if columns[1][0] == 1 else "repeat"
     _, second = definitions[1][1]["read"]
-    return (len(definitions), "rotate" if second[1][0] == 0 else "repeat",
+    return ("ansi", len(definitions), "rotate" if second[1][0] == 0 else "repeat",
             "first" if position == 0 else "last", "quoted" if '"' in columns[0][1] else "plain")
 
 
