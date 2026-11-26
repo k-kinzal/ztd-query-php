@@ -159,7 +159,7 @@ NATIVE = {
     "mysql_generated_view_headings": "mysql-generated-view-headings-v2.json",
     "mysql_grouped_having": "mysql-grouped-having-v4.json",
     "mysql_with_projection": "mysql-with-projection-v1.json",
-    "mysql_ansi_with": "mysql-ansi-with-v1.json",
+    "mysql_ansi_with": "mysql-ansi-with-v2.json",
     "mysql_with_projection_alias": "mysql-with-projection-alias-v1.json",
     "mysql_derived_projection_alias": "mysql-derived-projection-alias-v1.json",
     "mysql_inherited_local_alias": "mysql-inherited-local-alias-v2.json",

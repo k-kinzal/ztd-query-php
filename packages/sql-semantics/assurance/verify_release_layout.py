@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v213.json"
-CONTRACT = "b737f5b8505e87b69ef2b55f5ba5cf7731ac922bd7bcc54a2b77afa3210e98c9"
+CONTRACT_NAME = "release-layout-v214.json"
+CONTRACT = "878a78da1617a1aeed452560bc515b135e01c28c9c28d854b78a029c295fcc4f"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -240,6 +240,11 @@ def verify_probe(raw, catalog):
                 '`__ztd_cte_1` AS (SELECT `__ztd_cte_0`.`__ztd_c0` AS `__ztd_c0` FROM `__ztd_cte_0`) '
                 'SELECT `__ztd_cte_1`.`__ztd_c0` AS `answer` FROM `__ztd_cte_1`',
             ], "installed-mysql-with-mode-mismatch", item)
+            require(item.get("verbatimWith") == [
+                True, True, "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=NO_BACKSLASH_ESCAPES/native/derived-merge=on",
+                0, "x\\n\0棚", "WITH `__ztd_cte_0` AS (SELECT 'x\\n\0棚' AS `__ztd_c0`) "
+                "SELECT `__ztd_cte_0`.`__ztd_c0` AS `answer` FROM `__ztd_cte_0`",
+            ], "installed-mysql-verbatim-with-mismatch", item)
             require(item.get("withCoordinates") == [0, 0, 1, 0, 1] and item["sql"] ==
                     'WITH `__ztd_cte_0` AS (SELECT 42 AS `__ztd_c0`), '
                     '`__ztd_cte_1` AS (SELECT `__ztd_cte_0`.`__ztd_c0` AS `__ztd_c0` FROM `__ztd_cte_0`) '

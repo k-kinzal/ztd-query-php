@@ -132,6 +132,30 @@ function observeMysqlVerbatimProjection(): array
     return [$direct == $analyzed, $direct == $batch, $analyzed->profileId(), $analyzed->columns[0]->expression->value, $analyzed->toString()];
 }
 
+function observeMysqlVerbatimWith(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(noBackslashEscapes: true));
+    $input = "WITH q AS (SELECT 'x\\n\0棚' AS v) SELECT v AS answer FROM q";
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $mode = SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::NoBackslashEscapes;
+    $release = $analyzer->profile()->grammar;
+    $column = new SqlSemantics\Platform\MySql\Ir\ResultColumn(
+        new SqlSemantics\Platform\MySql\Ir\Literal\TextLiteral("x\\n\0棚"),
+        new SqlSemantics\Platform\MySql\Ir\Identifier('v'),
+    );
+    $definition = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition(
+        new SqlSemantics\Platform\MySql\Ir\Select([$column], release: $release, mode: $mode),
+    );
+    $read = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, [
+        new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('answer')),
+    ]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$definition], $read, $release, $mode);
+
+    return [$direct == $analyzed, $direct == $batch, $analyzed->profileId(), $analyzed->body->definition,
+        $analyzed->definitions[0]->body->columns[0]->expression->value, $analyzed->toString()];
+}
+
 function observeMysqlParameterTargets(SqlSemantics\Platform\MySql\Semantics $analyzer): array
 {
     $input = 'SELECT CAST(? AS SIGNED) AS signed_input, CAST((?) AS UNSIGNED INTEGER) AS unsigned_input';
@@ -2573,6 +2597,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
         }
         if ($platform === 'MySql' && $role === 'Rows\With\WithProjection') {
             $details['withMode'] = observeMysqlWithMode();
+            $details['verbatimWith'] = observeMysqlVerbatimWith();
             $predecessor = $result->definitions[1]->body;
             $body = $result->body;
             $details['withCoordinates'] = [$predecessor->definition, $predecessor->columns[0]->slot,
