@@ -12,11 +12,11 @@ from sqlite_domain import RenderFault
 
 LABEL = "parameter"
 OBSERVER = "server_parameter_observer.php"
-CONTRACT = "d3c7edac68d8e12993dccdddfaa42195c68defde2f4f778b6491b91856db6ab6"
+CONTRACT = "a97e1308934d39ee916dd8b2323104a171d6b1325f38dd97a878b4c9fdbcce6b"
 
 
 def specifications():
-    path, projection = TOOL / "server-parameter-v6.json", TOOL / "server-projection-v1.json"
+    path, projection = TOOL / "server-parameter-v7.json", TOOL / "server-projection-v1.json"
     require(digest(path) == CONTRACT and digest(projection) == PROJECTION, "server-parameter-contract-mismatch")
     return reconcile_catalog_rejections(json.loads(path.read_text())), json.loads(projection.read_text())["profiles"]
 
@@ -107,7 +107,7 @@ def check_preparation(engine, environment, preparation):
 def faults(engine, tag):
     root = f"sql-semantics-{engine}/src/Ir/"
     comparison = case(engine, tag, [ref(1), ref(2)], [-11, 23])
-    target, alternate = ("AS SIGNED)';", "AS UNSIGNED)';") if engine == "mysql" else ("$this->input->value", "'int8'")
+    target, alternate = ("$this->target->value", "'UNSIGNED'") if engine == "mysql" else ("$this->input->value", "'int8'")
     return [
         RenderFault("discard-projected-parameter", root + "SelectSql.php", "$expression instanceof Parameter => $expression->toString(),",
                     "$expression instanceof Parameter => $expression->toString() . ' * 0',", comparison, "meaning-mismatch"),

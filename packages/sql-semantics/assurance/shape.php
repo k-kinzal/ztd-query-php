@@ -250,6 +250,9 @@ if ($dialect === 'mysql') {
     $properties['Select']['mode'] = ['Binding\\ProjectionMode'];
     $properties['Binding\\ProjectionMode'] = $methods['Binding\\ProjectionMode'] = [];
     $enumCases['Binding\\ProjectionMode'] = ['Empty' => 'empty', 'AnsiQuotes' => 'ANSI_QUOTES'];
+    $properties['Binding\\Parameter']['target'] = ['Binding\\ParameterTarget'];
+    $properties['Binding\\ParameterTarget'] = $methods['Binding\\ParameterTarget'] = [];
+    $enumCases['Binding\\ParameterTarget'] = ['Signed' => 'SIGNED', 'Unsigned' => 'UNSIGNED'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NullSafeEqual' => '<=>', 'NotEqual' => '<>',
         'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
 }

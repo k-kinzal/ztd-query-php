@@ -77,7 +77,12 @@ function constructOperand(string $namespace, array $data): object
             $collation::from($data[2])
         ),
         'boolean' => new $type($data[1]),
-        'parameter' => isset($data[2]) ? new $type($data[1], $castTarget::from($data[2])) : new $type($data[1]),
+        'parameter' => match (true) {
+            !isset($data[2]) => new $type($data[1]),
+            $namespace === 'SqlSemantics\\Platform\\MySql\\Ir\\'
+                => new $type($data[1], SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::from($data[2])),
+            default => new $type($data[1], $castTarget::from($data[2])),
+        },
         'slot', 'text-slot', 'bool-slot', 'wide-slot', 'integral-slot' => new $type($data[1], $data[2] ?? 0),
         'null', 'wide-null' => new $type(),
         'operation' => new $type(
@@ -150,6 +155,9 @@ function observeOperand(string $namespace, object $value): array
         $namespace . 'Predicate\\Text\\TextComparison' => ['text-comparison', $value->operator->value, $value->collation->value,
             observeOperand($namespace, $value->left), observeOperand($namespace, $value->right)],
         $namespace . 'Binding\\Parameter' => match (true) {
+            $value instanceof SqlSemantics\Platform\MySql\Ir\Binding\Parameter
+                && $value->target === SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget::Unsigned
+                => ['parameter', $value->position, $value->target->value],
             !($value instanceof SqlSemantics\Platform\PostgreSql\Ir\Binding\Parameter),
             $value->input === SqlSemantics\Platform\PostgreSql\Ir\Expression\CastDestination::Integer
                 => ['parameter', $value->position],

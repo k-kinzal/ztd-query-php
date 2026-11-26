@@ -12,8 +12,8 @@ VALUES = (-2147483648, 0, 9, 2147483647, None)
 
 
 def reconcile_catalog_rejections(specification):
-    contract = TOOL / "native-context-diagnostics-v1.json"
-    require(digest(contract) == "7cd84797db58f6a90ece539e09461ac5ad064d24df7061ae0a3e666a012e8778",
+    contract = TOOL / "native-context-diagnostics-v2.json"
+    require(digest(contract) == "32a4db085bd1458c05d3e1b2de54c248a645702a59081aa9b9b297f2c0176044",
             "native-context-diagnostics-contract")
     schedule = json.loads(contract.read_text())["postgres"][specification["revision"]]
     key = "additionalPostgreSqlNegatives"

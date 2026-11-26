@@ -1,0 +1,30 @@
+{
+  "revision": "SemanticsIR/native-context-diagnostics-2",
+  "approval": "pending-human-review",
+  "predecessor": "native-postgres-fixture-isolation-v1.json",
+  "scope": "Keep the explicit PostgreSQL temporary type-shadow refusal in the protected schedule in addition to every predecessor parameter refusal.",
+  "postgres": {
+    "SemanticsIR/server-parameter-6": {
+      "added": [
+        "A temporary relation named text resolves the cast to the relation's composite type."
+      ],
+      "totalRejections": 6
+    },
+    "SemanticsIR/postgres-typed-parameters-2": {
+      "added": [
+        "A temporary relation named text resolves the cast to the relation's composite type."
+      ],
+      "totalRejections": 7
+    },
+    "SemanticsIR/server-parameter-7": {
+      "added": [
+        "A temporary relation named text resolves the cast to the relation's composite type."
+      ],
+      "totalRejections": 6
+    }
+  },
+  "versionedFrom": {
+    "path": "native-context-diagnostics-v1.json",
+    "sha256": "7cd84797db58f6a90ece539e09461ac5ad064d24df7061ae0a3e666a012e8778"
+  }
+}

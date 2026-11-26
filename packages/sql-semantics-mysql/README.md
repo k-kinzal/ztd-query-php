@@ -16,6 +16,8 @@ echo $ir->toString();
 
 The checked complete domain includes signed integers and native VARCHAR projections. Configure the grammar release and lexical profile before declaring the catalog. Use a database-qualified relation name for binding or configure a current database in the mode.
 
+In a result projection, `CAST(? AS SIGNED)` and `CAST(? AS UNSIGNED)` retain separate `Ir\Binding\ParameterTarget` values. A position starts at one within its SELECT and follows the order of its markers. A compound emits markers in its left-to-right query order. Supply the corresponding values when preparing and executing the emitted SQL.
+
 A declared session-temporary table has its own `ExternalRelationKind::TemporaryTable` value. Reads and writes bind to the temporary table when it shares an absolute name with a persistent table. A resolved `RENAME TABLE` continues to address the persistent table of that name. Evaluate the IR in a connection with the corresponding temporary table declaration.
 
 `DROP VIEW` binds in the persistent catalog. A session-temporary table at the same absolute name remains available after removing the view. `DROP VIEW IF EXISTS` can represent an absent persistent view even if a temporary table uses that name.

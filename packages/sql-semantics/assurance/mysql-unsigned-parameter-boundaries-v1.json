@@ -1,0 +1,99 @@
+{
+  "revision": "SemanticsIR/mysql-unsigned-parameter-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-unsigned-parameter-v1.json",
+  "rules": {
+    "Binding/Parameter::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($position >= 1 && $position <= 1024, 'A parameter position must be between 1 and 1024.');"
+      ]
+    },
+    "Binding/Parameter::toString": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return 'CAST(? AS ' . $this->target->value . ')';"
+      ]
+    },
+    "Binding/ParameterLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if (!$expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\Cast || $expression->array) {",
+        "    return null;",
+        "}",
+        "$kind = $expression->target->kind;",
+        "if ($kind !== \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Signed && $kind !== \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Unsigned) {",
+        "    return null;",
+        "}",
+        "$target = $kind === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Signed ? \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterTarget::Signed : \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterTarget::Unsigned;",
+        "$operand = $expression->operand;",
+        "while ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "return $operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter && $operand->marker === '?' ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter($position, $target) : null;"
+      ]
+    },
+    "Expression/IntegralCastLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "while ($expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $expression = $expression->operand;",
+        "}",
+        "if (!$expression instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Conversion\\Cast) {",
+        "    return null;",
+        "}",
+        "$target = $expression->target->kind;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$expression->array && ($target === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Signed || $target === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Unsigned), 'A projection cast requires a checked scalar integer target.');",
+        "$operand = $expression->operand;",
+        "while ($operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Expression\\Grouped) {",
+        "    $operand = $operand->operand;",
+        "}",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$operand instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Parameter, 'A marker under another integral conversion is outside the projected parameter role.');",
+        "$value = $this->lower($operand, $binding) ?? (new \\SqlSemantics\\Platform\\MySql\\Ir\\ExpressionLowering())->lower($operand, $binding, true);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange && !$value instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerMembership, 'An integer cast requires a checked integral scalar input.');",
+        "return $target === \\SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CastKind::Signed ? new \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast($value) : new \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\UnsignedCast($value);"
+      ]
+    },
+    "Rows/CompoundShape::type": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "if ($query instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\Compound) {",
+        "    return self::merge(self::type($query->left, $position), self::type($query->right, $position), self::legacy($query));",
+        "}",
+        "$column = $query->columns[$position]->expression;",
+        "return match (true) {",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\TextLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\TextColumnReference => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Text,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\CollatedText => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Text,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\UnsignedCast => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::UnsignedInteger,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter && $column->target === \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ParameterTarget::Unsigned => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::UnsignedInteger,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\NullLiteral => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Unknown,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\Choice\\SignedCase => match ($query->signedCaseLayout($position)['storage'] ?? null) {",
+        "        null => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Unknown,",
+        "        \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Wide => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "        \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Tiny, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Small, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Medium, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\IntegerStorage::Standard => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Integer,",
+        "    },",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\ColumnReference => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::Integer,",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\From\\IntegralColumnReference => throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('An extended integral field has no checked set column role.'),",
+        "    $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Arithmetic, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\BooleanLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\IntegerLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerComparison, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerMembership, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\IntegerRange, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\NullTest, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Literal\\ProjectedIntegerLiteral, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Truth\\TruthTest, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\Text\\TextComparison, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\Parameter, $column instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Expression\\SignedCast => \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\ResultKind::WideInteger,",
+        "};"
+      ]
+    }
+  }
+}

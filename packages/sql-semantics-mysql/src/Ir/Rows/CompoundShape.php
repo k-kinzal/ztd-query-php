@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Ir\Rows;
 
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
 use SqlSemantics\Platform\MySql\Ir\Binding\Parameter;
+use SqlSemantics\Platform\MySql\Ir\Binding\ParameterTarget;
 use SqlSemantics\Platform\MySql\Ir\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
@@ -81,6 +82,7 @@ final class CompoundShape
             $column instanceof TextLiteral, $column instanceof TextColumnReference => ResultKind::Text,
             $column instanceof CollatedText => ResultKind::Text,
             $column instanceof UnsignedCast => ResultKind::UnsignedInteger,
+            $column instanceof Parameter && $column->target === ParameterTarget::Unsigned => ResultKind::UnsignedInteger,
             $column instanceof NullLiteral => ResultKind::Unknown,
             $column instanceof SignedCase => match ($query->signedCaseLayout($position)['storage'] ?? null) {
                 null => ResultKind::Unknown,

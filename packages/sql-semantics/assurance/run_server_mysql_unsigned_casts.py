@@ -16,8 +16,8 @@ from server_cases import observation
 from sqlite_domain import RenderFault
 
 LABEL = "mysql-unsigned-casts"
-CONTRACT_NAME = "mysql-unsigned-casts-v3.json"
-CONTRACT = "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b"
+CONTRACT_NAME = "mysql-unsigned-casts-v4.json"
+CONTRACT = "3de3c3690474f785b177629264d836df01cdcf64f5487c5213033b70e98c1b0e"
 OBSERVER = "mysql_cast_observer.php"
 
 

@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Parameter as ParsedParameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 
 /**
- * Resolves a native marker in a projected signed cast.
+ * Resolves a native marker in a projected integral cast.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -25,14 +25,19 @@ final class ParameterLowering
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
-        if (!$expression instanceof Cast || $expression->array || $expression->target->kind !== CastKind::Signed) {
+        if (!$expression instanceof Cast || $expression->array) {
             return null;
         }
+        $kind = $expression->target->kind;
+        if ($kind !== CastKind::Signed && $kind !== CastKind::Unsigned) {
+            return null;
+        }
+        $target = $kind === CastKind::Signed ? ParameterTarget::Signed : ParameterTarget::Unsigned;
         $operand = $expression->operand;
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
         }
 
-        return $operand instanceof ParsedParameter && $operand->marker === '?' ? new Parameter($position) : null;
+        return $operand instanceof ParsedParameter && $operand->marker === '?' ? new Parameter($position, $target) : null;
     }
 }

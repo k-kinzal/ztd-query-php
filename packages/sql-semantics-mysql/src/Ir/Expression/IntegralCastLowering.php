@@ -47,8 +47,8 @@ final class IntegralCastLowering
             $operand = $operand->operand;
         }
         Check::input(
-            $target !== CastKind::Unsigned || !$operand instanceof ParsedParameter,
-            'A projection cast must have the scalar MySQL SIGNED target.'
+            !$operand instanceof ParsedParameter,
+            'A marker under another integral conversion is outside the projected parameter role.'
         );
 
         $value = $this->lower($operand, $binding) ?? (new ExpressionLowering())->lower($operand, $binding, true);

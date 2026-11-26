@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v211.json"
-CONTRACT = "24b0a6280d95410f6d64cfc443afca22b73c8590b737741dbf1e57a07260296a"
+CONTRACT_NAME = "release-layout-v212.json"
+CONTRACT = "354a2df76e9f017eeccb2dbe38fac3dbd8ca30d91c144c99e050a8c79d78838c"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -647,6 +647,10 @@ def verify_probe(raw, catalog):
                 "SELECT `__ztd_source`.`id` AS `first_value`, `__ztd_source`.`id` AS `second_value` FROM `app`.`lexical_rows` AS `__ztd_source`",
                 [[0, 0], [0, 0]], profile + "empty" + suffix, "id", "SELECT 'id' AS `first_value`",
             ], "installed-mysql-projection-mode-mismatch", item)
+            require(item.get("unsignedParameters") == [
+                True, True, [[1, "SIGNED"], [2, "UNSIGNED"]],
+                "SELECT CAST(? AS SIGNED) AS `signed_input`, CAST(? AS UNSIGNED) AS `unsigned_input`",
+            ], "installed-mysql-parameter-target-mismatch", item)
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",
                                                      "utf8mb4_general_ci", "utf8mb4_0900_ai_ci"],

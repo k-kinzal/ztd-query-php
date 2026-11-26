@@ -141,7 +141,8 @@ def negatives(tag):
     yield one(tag, unsigned(["slot", 2]), "table"), "Column slot must belong to the SELECT source."
     yield one(tag, conversion((U,) * 33, leaf(1))), "Expression height or expanded node count exceeds"
     for sql, reason in (
-        ("SELECT CAST(? AS UNSIGNED)", "A projection cast must have the scalar MySQL SIGNED target."),
+        ("SELECT CAST(CAST(? AS UNSIGNED) AS UNSIGNED)",
+         "A marker under another integral conversion is outside the projected parameter role."),
         ("SELECT CAST('input' AS UNSIGNED)", "The operand has no complete MySQL projection representation."),
         ("SELECT CAST(1 BETWEEN 0 AND 2 AS UNSIGNED)", "An integer cast requires a checked integral scalar input."),
     ):
