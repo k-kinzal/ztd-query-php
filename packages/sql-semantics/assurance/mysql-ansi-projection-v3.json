@@ -1,0 +1,284 @@
+{
+  "revision": "SemanticsIR/mysql-projection-modes/3",
+  "approval": "pending-human-review",
+  "requiredBaseline": "contract-v1.json",
+  "roles": [
+    "Binding/ProjectionMode",
+    "Select",
+    "From/DerivedSource",
+    "Rows/Compound",
+    "Rows/LocalProjection"
+  ],
+  "counterexamples": "SELECT 'a\\nb' AS k with NO_BACKSLASH_ESCAPES, including with ANSI_QUOTES, is accepted by all pinned native servers and refused before complete projection publication by the previous mode boundary.",
+  "releases": [
+    "5.6.51",
+    "5.7.44",
+    "8.0.44",
+    "8.1.0",
+    "8.2.0",
+    "8.3.0",
+    "8.4.7",
+    "9.0.1",
+    "9.1.0"
+  ],
+  "environment": "The pinned native release running with an utf8mb4 connection, exact relation names, native prepared parameters and the existing derived-merge profile.",
+  "profiles": [
+    "empty",
+    "ANSI_QUOTES"
+  ],
+  "structure": "The owning projection selects closed lexical rules. Literal operands retain only decoded UTF-8 bytes. Identifier operands retain their resolved occurrence and slot. The parent checks mode compatibility for derived and set inputs. Local and common table projections inherit their member mode.",
+  "admission": "Admit all four specified modes at the same native projection boundaries. Preserve the older direct finite coordinates and exploration requests. In the verbatim modes decoded backslash characters, NUL and other valid text bytes are legal. Unsupported modes remain outstanding wherever required by the baseline.",
+  "rendering": "Names use escaped backtick delimiters. Text uses single quotes with doubled single quotes. Backslash mode escapes backslash and the defined control characters. Verbatim mode emits the decoded UTF-8 bytes with quote doubling alone. SQL is delivered through a length-aware connection. The native connection preserves plain literal charset, collation and coercibility.",
+  "observations": [
+    "Result column names, positions and native types",
+    "Typed row values including NULL, repeated rows, and guaranteed order",
+    "External identity and occurrence or slot for resolved references, including qualified and unqualified occurrences",
+    "Native parameter correspondence and ordered supplied bindings",
+    "Decoded text bytes including embedded NUL, escaped and verbatim spellings, and supplementary UTF-8 under a verified connection profile"
+  ],
+  "fixture": {
+    "table": "ir_fixture.mode_rows",
+    "columns": [
+      "id",
+      "peer",
+      "a\"b",
+      "a`b"
+    ],
+    "types": [
+      "INT NOT NULL",
+      "INT",
+      "INT NOT NULL",
+      "INT NOT NULL"
+    ],
+    "rows": [
+      [
+        1,
+        17,
+        7,
+        27
+      ],
+      [
+        3,
+        71,
+        10,
+        37
+      ],
+      [
+        1,
+        null,
+        4,
+        14
+      ],
+      [
+        1,
+        17,
+        7,
+        27
+      ]
+    ]
+  },
+  "finite": {
+    "order": [
+      "mode",
+      "slots",
+      "labels",
+      "distinct"
+    ],
+    "mode": [
+      "empty",
+      "ANSI_QUOTES"
+    ],
+    "slots": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        0,
+        1,
+        3
+      ]
+    ],
+    "labels": [
+      "ordinary",
+      "quote",
+      "backtick"
+    ],
+    "distinct": [
+      false,
+      true
+    ],
+    "identities": 48,
+    "recovery": "Recover mode from the published profile identifier, ordered slots and labels from the measured fields, and duplicate policy from the observed graph. Compare the recovered set to the independently expanded Cartesian product and require a single occurrence of each coordinate."
+  },
+  "analysis": [
+    "qualified-reference",
+    "quoted-delimiters",
+    "wildcard",
+    "string-and-null",
+    "repeat-and-distinct",
+    "typed-parameters",
+    "compound",
+    "derived",
+    "empty-mode-control",
+    "ansi-mode-control"
+  ],
+  "exploration": {
+    "seeds": [
+      30139,
+      60331
+    ],
+    "casesPerSeed": 32,
+    "dimensions": [
+      "projection width",
+      "field slot",
+      "text literal bytes",
+      "aliases",
+      "distinct",
+      "scope nesting",
+      "mode"
+    ],
+    "timeoutSecondsPerRelease": 900,
+    "directCasesPerSeed": 32,
+    "requiredAdditionalForms": [
+      "all four modes",
+      "verbatim literals with backslash, quote, NUL, control and supplementary characters",
+      "local depths zero through four",
+      "projection and read of different slots"
+    ]
+  },
+  "negative": [
+    "mixed-derived-join-modes",
+    "mixed-compound-arm-modes",
+    "unresolved-quoted-field",
+    "incompatible-analysis-context",
+    "mixed-verbatim-derived",
+    "mixed-verbatim-compound"
+  ],
+  "faults": [
+    "detach-mode-from-profile",
+    "allow-cross-mode-composition",
+    "misbind-quoted-column",
+    "emit-identifier-as-string",
+    "apply-backslash-escaping-in-verbatim-mode",
+    "double-verbatim-single-quote-as-backslash-escape"
+  ],
+  "budgets": {
+    "attemptSeconds": 15,
+    "releaseSeconds": 900
+  },
+  "exclusions": [],
+  "obligations": {
+    "Q01": "Closed construction and exact incompatible-mode and unresolved-reference refusals.",
+    "Q02": "Preserve the v2 legal inputs. Independently expand both finite grids and use analyzed and structural exploration requests across the four modes.",
+    "Q03": "Compatibility checks on direct set and derived edges, and analyzed reference identity.",
+    "Q04": "Native execution of original and emitted SQL plus an independent typed evaluator. Compare multisets only for cases without guaranteed ordering.",
+    "Q05": "Audit the declared enum, constructors, lowering and dispatch shapes and run identical probes in both staged distribution layouts."
+  },
+  "trust": [
+    "PHP final classes, readonly fields and enum singletons",
+    "Pinned MySQL native servers",
+    "External lexical observer and case comparator",
+    "Reviewed checker selection and recorded distribution"
+  ],
+  "remainingBaseline": "The governing baseline has broader MySQL statement and mode coverage. This addition does not change required statement families, parameter styles, mode combinations or other dialects.",
+  "previous": "mysql-ansi-projection-v1.json",
+  "dialects": [
+    "MySql"
+  ],
+  "existingRoles": [
+    "Select",
+    "From/DerivedSource",
+    "Rows/Compound",
+    "Rows/LocalProjection"
+  ],
+  "constructors": {
+    "ProjectionMode": {
+      "type": "Binding/ProjectionMode",
+      "role": "The lexical interpretation of double quotes and backslash in a native projection.",
+      "structure": "Four immutable enum cases for each combination of ANSI_QUOTES and NO_BACKSLASH_ESCAPES.",
+      "conditions": "The root and all composing inputs share an admitted mode.",
+      "meaning": "Analysis resolves quoted names and literal escape behavior before publication. A decoded text value can be used in any compatible owning projection.",
+      "sql": "Report the mode in profileId and emit the decoded text under the mode of the owning projection."
+    },
+    "ProjectionTextLiteral": {
+      "type": "Literal/TextLiteral",
+      "role": "A plain utf8mb4 literal within its native connection profile.",
+      "structure": "One valid decoded UTF-8 byte string. It can contain the empty value, controls, NUL and supplementary characters.",
+      "conditions": "Only valid UTF-8 is admitted. Every composition carries the mode where the literal is evaluated.",
+      "meaning": "The native plain string value has the profile connection collation and literal coercibility. The mode governs how authored SQL is decoded and how emitted SQL is spelled.",
+      "sql": "Escape under the explicit backslash rule of the owner. Represent single quotes by doubling them and leave every other byte unchanged under NO_BACKSLASH_ESCAPES."
+    }
+  },
+  "requirements": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06"
+  ],
+  "versionedFrom": {
+    "path": "mysql-ansi-projection-v2.json",
+    "sha256": "0eb5e00d4de4fee36c24ce5d97ee8a01db99018a98742ab47107e411f7f7c825"
+  },
+  "additionalProfiles": [
+    "NO_BACKSLASH_ESCAPES",
+    "ANSI_QUOTES,NO_BACKSLASH_ESCAPES"
+  ],
+  "additionalFinite": {
+    "modes": [
+      "NO_BACKSLASH_ESCAPES",
+      "ANSI_QUOTES,NO_BACKSLASH_ESCAPES"
+    ],
+    "identities": 48,
+    "recovery": "Recover structure from the measured typed slots and profile. Extend the previous reference subdomain to the two verbatim profiles."
+  },
+  "textFinite": {
+    "modes": [
+      "empty",
+      "ANSI_QUOTES",
+      "NO_BACKSLASH_ESCAPES",
+      "ANSI_QUOTES,NO_BACKSLASH_ESCAPES"
+    ],
+    "utf8": [
+      "",
+      "a\\nb",
+      "a\\'b",
+      "a\u0000b",
+      "\r\n\b\u001a\t",
+      "é棚😀"
+    ],
+    "placements": [
+      "plain",
+      "local"
+    ],
+    "identities": 48,
+    "order": [
+      "modes",
+      "utf8",
+      "placements"
+    ],
+    "recovery": "Read literal bytes from the observed leaf and the local placement from its actual preserved edge. Require each complete coordinate exactly once."
+  },
+  "textAnalysis": [
+    "verbatim-escape",
+    "verbatim-ansi-escape",
+    "verbatim-adjacent",
+    "verbatim-native-nul",
+    "verbatim-double-quote",
+    "verbatim-ansi-column",
+    "verbatim-set",
+    "verbatim-unaliased"
+  ],
+  "sourceRules": [
+    "https://dev.mysql.com/doc/refman/8.4/en/string-literals.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_no_backslash_escapes"
+  ]
+}
