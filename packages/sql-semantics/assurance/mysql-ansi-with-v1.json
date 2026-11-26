@@ -1,0 +1,48 @@
+{
+  "revision": "SemanticsIR/mysql-ansi-with/1",
+  "approval": "pending-human-review",
+  "dialects": ["MySql"],
+  "requiredBaseline": "contract-v1.json",
+  "extends": ["mysql-with-projection-v1.json", "mysql-ansi-projection-v2.json"],
+  "constructors": {},
+  "existingRoles": ["Binding/ProjectionMode", "Rows/With/WithProjection", "Rows/With/WithDefinition", "Rows/With/WithRead", "Rows/LocalProjection", "Select"],
+  "counterexample": "Under ANSI_QUOTES, a valid ordinary WITH whose first definition references a double-quoted field is refused by 678c9402c7af59461f62ddcccf8092f3544c0fd5 because its owner reports empty sql_mode.",
+  "profiles": ["mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "rejectedReleases": ["mysql-5.6.51", "mysql-5.7.44"],
+  "admission": "Apply the native ordinary WITH restrictions and prefix visibility from mysql-with-projection-v1. Concrete query members use the owning native grammar release and lexical mode. Lexical reads use only slots of a preceding definition and cannot select a separate language mode. A direct owner and an analyzed owner establish the same conditions.",
+  "structure": "An ordered nonempty definition list and final body. Each local read retains its definition and output ordinals. The owner retains its fixed release and lexical mode. Every concrete child shares that release and mode, including nested WITH and derived queries.",
+  "meaning": "A read of definition k evaluates the checked prefix value at k and projects its selected slots in result order. Definitions are evaluated with native duplicate and NULL semantics. Native positional bindings follow emitted lexical order even when the selected read uses only part of the lexical prefix.",
+  "rendering": "Render ordered definitions and positional reads using quoted generated names. Backticks in generated references and single-quoted strings preserve their interpretation under both modes. Match an original or direct projection's specified output names.",
+  "observations": ["Native lexical mode", "Definition and field ordinals", "Ordered result names and native field types", "Typed row multisets including NULL and duplicate multiplicity", "Native binding correspondence across CTE members"],
+  "finite": {
+    "definitions": [2, 3, 4],
+    "slotSelection": ["rotate", "repeat"],
+    "read": ["first", "last"],
+    "labels": ["plain", "quoted"],
+    "identities": 24,
+    "order": ["definitions", "slotSelection", "read", "labels"],
+    "recovery": "Recover the definition count, the first dependent selection, the final definition ordinal and exact headings from recorded graphs. Reconcile every combination with a separate finite-coordinate calculation."
+  },
+  "analysis": ["ordered-prefix", "quoted-names", "nested-shadow", "physical-and-local", "signed-binding-order", "derived-with"],
+  "negative": ["mixed-mode-definition", "mixed-mode-nested-query", "mixed-mode-final-body", "legacy-owner"],
+  "exploration": {
+    "seeds": [39019, 49121],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 900,
+    "dimensions": ["Number of definitions", "Selected definition ordinals", "Selected column ordinals and widths", "Quoted headings", "Underlying row shape", "Nested WITH owners"]
+  },
+  "budgets": {"attemptSeconds": 15},
+  "faults": ["detach-with-mode", "skip-with-profile-matching", "substitute-definition-ordinal"],
+  "requiredProperties": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "obligations": {
+    "Q01": "Closed native owner and checked child profile, prefix and slot constraints.",
+    "Q02": "Generate legal prefixes under ANSI_QUOTES from the fixed fixture and check both entry points. Retain the complete empty-mode schedule.",
+    "Q03": "Use the ordinary WITH scope relation at each level and compare actual resolved ordinals.",
+    "Q04": "Compare constructed and analyzed SQL and independent typed predictions with the native engine. Preserve the effect of reading an earlier definition.",
+    "Q05": "Check exact PHP composition shapes and installed construction under the explicit mode."
+  },
+  "fixture": "Use the MySQL projection mode fixture from mysql-ansi-projection-v2.json.",
+  "trust": ["The independently fixed ordinary CTE rule and row evaluator", "Pinned SQL server profiles, UTF-8 and native PDO bindings", "Reviewed checker selection and distribution linking"],
+  "exclusions": [],
+  "remainingBaseline": "Recursive WITH, other lexical modes, named markers and other statement roles remain required separately."
+}
