@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\View;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Ordering\RequestedResultAlias;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectSql;
@@ -51,6 +52,7 @@ final class CreateView implements SemanticsIR
         public readonly ViewCheckOption $checkOption = ViewCheckOption::None,
         public readonly ?ViewDefiner $definer = null,
     ) {
+        Check::input($query->mode === ProjectionMode::Empty, 'CREATE VIEW requires empty sql_mode.');
         Check::input(
             $policy !== ViewCreationPolicy::Preserve || $query->release === GrammarRelease::MySql910,
             'CREATE VIEW IF NOT EXISTS requires MySQL 9.1.'

@@ -123,6 +123,24 @@ def request_batches(cases, maximum):
         yield pending
 
 
+def attempt_seconds(specification):
+    seconds = specification.get("budgets", {}).get("attemptSeconds")
+    require(seconds is None or (type(seconds) is int and seconds > 0), "invalid-native-attempt-budget", seconds)
+    return seconds
+
+
+def attempt_batch_size(specification, transport):
+    return 1 if attempt_seconds(specification) is not None else transport["maximumBatch"]
+
+
+def attempt_observation(started, seconds):
+    if seconds is None:
+        return {}
+    elapsed = time.monotonic() - started
+    require(elapsed <= seconds, "timeout", {"seconds": elapsed, "attemptBudget": seconds})
+    return {"elapsedSeconds": elapsed}
+
+
 def observe_finite_id(domain, engine, response, item, request):
     if "sql" in request:
         return domain.analysis_finite_id(engine, response, item, request["sql"])
@@ -170,10 +188,16 @@ def execute(args, specification, tag, worker, db, domain=None):
     refusals = Counter()
     key = current = comparison = None
     batch = []
+    seconds = attempt_seconds(specification)
+    worker_limit, observer_limit = worker.deadline, db.deadline
     with (args.out / "events.jsonl").open("w") as output:
         ledger = Ledger(output)
         try:
-            for batch in request_batches(domain.requests(args.engine, tag, specification), transport["maximumBatch"]):
+            for batch in request_batches(domain.requests(args.engine, tag, specification), attempt_batch_size(specification, transport)):
+                started = time.monotonic()
+                if seconds is not None:
+                    worker.deadline = min(worker_limit, started + seconds)
+                    db.deadline = min(observer_limit, started + seconds)
                 for key, current, _, _ in batch:
                     ledger.record(key, "attempted", input=current)
                 inputs = [entry[1] for entry in batch]
@@ -194,7 +218,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                         witness["nativeRejection"] = verdict
                         if "sql" not in current:
                             witness["nativeRejectionSql"] = sql
-                    ledger.record(key, "rejected", response=response, **witness)
+                    ledger.record(key, "rejected", response=response, **witness, **attempt_observation(started, seconds))
                     continue
                 for (key, current, item, _), response in zip(batch, replies):
                     domain.check_value(item, response)
@@ -214,7 +238,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                         original = domain.observation(db.request(domain.observer_request(item, current["sql"])))
                         domain.check_observation(item, original, current["sql"])
                         details["original"] = original
-                    ledger.record(key, "compared", **details)
+                    ledger.record(key, "compared", **details, **attempt_observation(started, seconds))
                     if key.startswith("finite/"):
                         seen[observe_finite_id(domain, args.engine, response, item, current)] += 1
                     elif key.startswith("direct/") and observe_direct is not None:
@@ -245,6 +269,7 @@ def execute(args, specification, tag, worker, db, domain=None):
                 **({"directFiniteIds": sorted(direct)} if observe_direct is not None else {}),
             }
         except Exception as error:
+            worker.deadline, db.deadline = worker_limit, observer_limit
             signal = error.signal if isinstance(error, Failure) else "unexpected-error"
             detail = error.detail if isinstance(error, Failure) else None
             for pending, _, _, _ in batch:
@@ -256,6 +281,8 @@ def execute(args, specification, tag, worker, db, domain=None):
                 "attemptedBatch": [entry[1] for entry in batch],
             }, comparison, lambda item: probe(item, worker.request(item), db, domain))
             raise
+        finally:
+            worker.deadline, db.deadline = worker_limit, observer_limit
 
 
 def faults(engine, tag):

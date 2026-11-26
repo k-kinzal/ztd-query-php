@@ -7,15 +7,64 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
+use SqlSemantics\Platform\MySql\Ir\Identifier;
+use SqlSemantics\Platform\MySql\Ir\ResultColumn;
+use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
+use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
+use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Testing\MySql\Inspection;
 
 #[CoversClass(SelectLowering::class)]
 #[Small]
 final class SelectLoweringTest extends TestCase
 {
+    public function testAnalyzeBindsBothQuotedOccurrencesToTheSameField(): void
+    {
+        $analyzer = new Semantics(mode: new Mode(ansiQuotes: true));
+        $catalog = $analyzer->context(['CREATE TABLE app.accounts ("account""id" INT, unused INT)']);
+        $sql = 'SELECT "account""id" AS "first", "a"."account""id" AS "second" FROM "app"."accounts" AS "a"';
+        $analyzed = $analyzer->analyze($sql, $catalog);
+        [$script] = $analyzer->analyzeAll($sql, $catalog);
+        $field = new ColumnReference(0);
+        $direct = new Select(
+            [
+                new ResultColumn($field, new Identifier('first')),
+                new ResultColumn($field, new Identifier('second')),
+            ],
+            new TableSource(new Identifier('app'), new Identifier('accounts'), [new Identifier('account"id')]),
+            release: $analyzer->profile()->grammar,
+            mode: ProjectionMode::AnsiQuotes
+        );
+
+        self::assertEquals($direct, $analyzed);
+        self::assertEquals($direct, $script);
+        self::assertSame($direct->toString(), $analyzed->toString());
+        self::assertStringContainsString('/sql-mode=ANSI_QUOTES/', $analyzed->profileId());
+    }
+
+    public function testAnalyzeCarriesTheModeAcrossADerivedBoundary(): void
+    {
+        $analyzer = new Semantics(mode: new Mode(ansiQuotes: true));
+        $query = $analyzer->analyze('SELECT "q"."amount" FROM (SELECT 42 AS "amount") AS "q"');
+
+        self::assertInstanceOf(LocalProjection::class, $query);
+        self::assertStringContainsString('/sql-mode=ANSI_QUOTES/', $query->profileId());
+    }
+
+    public function testAnalyzeChecksTheContextModeBeforeBinding(): void
+    {
+        $analyzer = new Semantics(mode: new Mode(ansiQuotes: true));
+        $ordinary = new Semantics();
+        $this->expectExceptionMessage('The context must match the selected language profile.');
+
+        $analyzer->analyze('SELECT 1 AS "n"', $ordinary->context([]));
+    }
+
     public function testLowerSharesTheResolvedSlot(): void
     {
         $semantics = new Inspection();

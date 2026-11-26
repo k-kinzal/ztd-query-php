@@ -14,7 +14,7 @@ from run import IDENTITY_CONTRACT, IMAGE, Failure, candidate_distribution, diges
 from renderer_fault_dispatch import verify as verify_fault_dispatch
 from run_server import check_profile, check_transport, rejects, same
 import run_server_join
-from run_server_join import check_fault_obligations, checked_fault_plan, direct_identities, native_rejection_sql, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
+from run_server_join import attempt_batch_size, attempt_seconds, check_fault_obligations, checked_fault_plan, direct_identities, native_rejection_sql, negative_count, observe_finite_id, request_batches, seed_ids, tools, version_tag
 
 
 def replay(path, report, specification, domain=run_server_join):
@@ -38,12 +38,20 @@ def replay(path, report, specification, domain=run_server_join):
 
     transport = check_transport()
     same(transport, report["transport"])
-    for batch in request_batches(domain.requests(engine, tag, specification), transport["maximumBatch"]):
+    seconds = attempt_seconds(specification)
+
+    def check_attempt_time(frame):
+        if seconds is not None:
+            elapsed = frame.get("elapsedSeconds")
+            require(type(elapsed) in (int, float) and 0 <= elapsed <= seconds, "native-attempt-budget-replay", frame["id"])
+
+    for batch in request_batches(domain.requests(engine, tag, specification), attempt_batch_size(specification, transport)):
         for key, request, _, _ in batch:
             require(canonical(matched(key, "attempted")["input"]) == canonical(request), f"server-{label}-replay-request", key)
         if batch[0][3] is not None:
             key, request, item, rejection = batch[0]
             frame = matched(key, "rejected")
+            check_attempt_time(frame)
             require(rejects(frame["response"], rejection), f"server-{label}-replay-rejection", key)
             if observe_rejection is not None and item is not None:
                 require("nativeRejection" in frame, f"server-{label}-replay-native-rejection-missing", key)
@@ -62,6 +70,7 @@ def replay(path, report, specification, domain=run_server_join):
             replies.append(response)
         for (key, request, item, _), response in zip(batch, replies):
             compared = matched(key, "compared")
+            check_attempt_time(compared)
             witness = domain.observation(compared["observation"])
             domain.check_observation(item, witness, response["sql"])
             require(("sql" in request) == ("original" in compared), f"server-{label}-replay-original-missing", key)

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows\Recursive;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalDefinition;
@@ -46,6 +47,7 @@ final class RecursiveSeriesLowering
         Check::input($query instanceof SetOperation && $query->operator === SetOperator::Union
             && $query->left instanceof Select && $query->right instanceof Select, 'A recursive series requires an anchor followed by one UNION step.');
         $anchor = (new SelectLowering())->lower($operation, $query->left);
+        Check::input($anchor->mode === ProjectionMode::Empty, 'A recursive series requires empty sql_mode.');
         $start = $anchor->columns[0]->expression;
         Check::input($anchor->source === null && $anchor->where === null && !$anchor->distinct && $anchor->orderBy === [] && $anchor->limit === null
             && count($anchor->columns) === 1 && $start instanceof IntegerLiteral, 'A recursive series needs one signed literal anchor.');

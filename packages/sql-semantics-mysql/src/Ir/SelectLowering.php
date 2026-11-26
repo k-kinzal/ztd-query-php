@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\From\JoinBinding;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ProjectionColumns;
 use SqlSemantics\Platform\MySql\Ir\Ordering\ResultLowering;
@@ -32,7 +33,11 @@ final class SelectLowering
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
-        Check::input($profile->lexical->equals(new LexicalSettings()), 'This projection profile requires the default lexical settings.');
+        $mode = match (true) {
+            $profile->lexical->equals(new LexicalSettings()) => ProjectionMode::Empty,
+            $profile->lexical->equals(new LexicalSettings('ANSI_QUOTES')) => ProjectionMode::AnsiQuotes,
+            default => throw new InvalidConstruction('A complete projection requires either empty sql_mode or ANSI_QUOTES.'),
+        };
         $statement = $operand ?? $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete MySQL IR currently supports a single projection SELECT.');
         Check::input(
@@ -53,6 +58,15 @@ final class SelectLowering
             $order[] = $result->order($key);
         }
 
-        return new Select($results, $binding->source(), $profile->grammar, $where, $statement->options === [SelectOption::Distinct], $order, $result->limit($statement->limit));
+        return new Select(
+            $results,
+            $binding->source(),
+            $profile->grammar,
+            $where,
+            $statement->options === [SelectOption::Distinct],
+            $order,
+            $result->limit($statement->limit),
+            $mode,
+        );
     }
 }

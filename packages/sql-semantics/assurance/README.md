@@ -628,6 +628,8 @@ The [targetless DO NOTHING contract](sqlite-upsert-nothing-v1.json) compares the
 
 ## MySQL signed quotient and remainder
 
+The [MySQL projection mode contract](mysql-ansi-projection-v2.json) checks complete SELECT, compound and derived projections in the empty lexical mode and `ANSI_QUOTES`. It recovers finite coordinates from constructed fields and compares both analyzed and emitted SQL with typed row predictions. The native observer measures the active mode on each request. Use `run_server_mysql_ansi_projection.py` and `combine_server_mysql_ansi_projection_evidence.py` to run and replay the fixed schedule. The parameter cases exercise the registered projected SIGNED role. Other parameter targets, including UNSIGNED, remain in the broader baseline scope.
+
 The [signed quotient record](mysql-signed-quotient-v1.json) specifies ordered signed `DIV` and infix remainder operands, the signed result, NULL, zero-divisor diagnostics and the signed 64-bit boundaries. The runner compares signed values, ordered field names, native metadata, duplicates and warning counts. Its observer checks that enabling a different SQL mode actually makes a division warning visible before it restores the empty mode.
 
 Run `run_server_mysql_signed_quotient.py` on the nine pinned MySQL releases. Replay their reports with `combine_server_mysql_signed_quotient_evidence.py`. The original boundary failure resulted from evaluating a nested multiplication before DIV. The schedule retains that expression and also constructs the same minimum value by addition so the two behaviors can be compared independently.

@@ -58,6 +58,36 @@ function observeMysqlHaving(SqlSemantics\Platform\MySql\Semantics $semantics): a
         $query->toString(), $shadow->toString()];
 }
 
+function observeMysqlProjectionModes(SqlSemantics\Platform\MySql\Semantics $ordinary): array
+{
+    $ansi = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true));
+    $declarations = ['CREATE TABLE app.lexical_rows (id INT, decoy INT)'];
+    $catalog = $ansi->context($declarations);
+    $input = 'SELECT "id" AS first_value, "r"."id" AS second_value FROM "app"."lexical_rows" AS "r"';
+    $analyzed = $ansi->analyze($input, $catalog);
+    [$batch] = $ansi->analyzeAll($input, $catalog);
+    $id = new SqlSemantics\Platform\MySql\Ir\Identifier('id');
+    $slot = new SqlSemantics\Platform\MySql\Ir\ColumnReference(0);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Select(
+        [
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($slot, new SqlSemantics\Platform\MySql\Ir\Identifier('first_value')),
+            new SqlSemantics\Platform\MySql\Ir\ResultColumn($slot, new SqlSemantics\Platform\MySql\Ir\Identifier('second_value')),
+        ],
+        new SqlSemantics\Platform\MySql\Ir\TableSource(
+            new SqlSemantics\Platform\MySql\Ir\Identifier('app'),
+            new SqlSemantics\Platform\MySql\Ir\Identifier('lexical_rows'),
+            [$id],
+        ),
+        release: $ansi->profile()->grammar,
+        mode: SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotes,
+    );
+    $text = $ordinary->analyze('SELECT "id" AS first_value');
+
+    return [$analyzed == $direct, $batch == $direct, $analyzed->profileId(), $analyzed->toString(),
+        array_map(static fn ($column): array => [$column->expression->occurrence, $column->expression->slot], $analyzed->columns),
+        $text->profileId(), $text->columns[0]->expression->value, $text->toString()];
+}
+
 function observeMysqlNullableHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.having_rows (amount INT)']);
@@ -2599,6 +2629,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
                 $result->source->kind->value, $result->ifNotExists, $result->toString(), $direct->toString(), $rejected];
         }
         if ($platform === 'MySql' && $role === 'Select') {
+            $details['projectionModes'] = observeMysqlProjectionModes($semantics);
             $value = $result->columns[0]->expression;
             if ($value::class !== $namespace . 'Ir\\Expression\\SignedCast'
                 || $value->operand::class !== $namespace . 'Ir\\IntegerLiteral') {

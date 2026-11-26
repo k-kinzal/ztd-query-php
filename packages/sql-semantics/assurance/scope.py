@@ -51,6 +51,7 @@ CONTRACTS = {
     "mysql-unsigned-casts-v3.json": "f3eda2ad5418a97deeaa8920f636adc3155eaa5ed11be18d4cf808c8b556a59b",
     "mysql-signed-quotient-v1.json": "66925621bd8a6e02a6e006be1163f34622ba75af77497f1958e052b7f9097996",
     "mysql-text-literal-v1.json": "54d594a684f8196c5ed651cb5d2220a5416f8e657bcdd6def6ddb60b6fa71629",
+    "mysql-ansi-projection-v2.json": "0eb5e00d4de4fee36c24ce5d97ee8a01db99018a98742ab47107e411f7f7c825",
     "mysql-varchar-slots-v2.json": "3282a89029e03bbab4448271d03cfc292eb18947d3ff0295b245290bea0eb559",
     "mysql-external-views-v1.json": "24ca8bdc80df5f8358b4020de5fad7219da5a2c58d045f4ecb0ff45cd4a8b18d",
     "mysql-external-view-read-names-v1.json": "2cb69bb12e38254dc35ab52711a810824c4e487678e8395952f8455ef7a60f03",

@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v209.json"
-CONTRACT = "1887f5c68a6c8e3199cab3da1cff354ef974a2a0875dda696398c50f73b511ee"
+CONTRACT_NAME = "release-layout-v210.json"
+CONTRACT = "97c25e922f5933384633f42e78dd452145edcdc77d7da8b57046dabbfd1a0b26"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -634,6 +634,13 @@ def verify_probe(raw, catalog):
                 "SELECT (`__ztd_source`.`a` NOT IN (`__ztd_source`.`b`, `__ztd_source`.`c`, `__ztd_source`.`d`, "
                 "`__ztd_source`.`e`, NULL, 2147483648, 2147483648)) AS `selected` FROM `app`.`membership_release` AS `__ztd_source`"],
                 "installed-mysql-signed-membership-mismatch", item)
+            profile = "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode="
+            suffix = "/native/derived-merge=on"
+            require(item.get("projectionModes") == [
+                True, True, profile + "ANSI_QUOTES" + suffix,
+                "SELECT `__ztd_source`.`id` AS `first_value`, `__ztd_source`.`id` AS `second_value` FROM `app`.`lexical_rows` AS `__ztd_source`",
+                [[0, 0], [0, 0]], profile + "empty" + suffix, "id", "SELECT 'id' AS `first_value`",
+            ], "installed-mysql-projection-mode-mismatch", item)
             require(item.get("signedCast") == "42" and item.get("unsignedCast") == "-1", "installed-integral-cast-mismatch", item)
             require(item.get("mysqlTextLiteral") == ["it's \0𐐷", "sample", "SELECT 'it''s \\0𐐷' AS `sample`",
                                                      "utf8mb4_general_ci", "utf8mb4_0900_ai_ci"],

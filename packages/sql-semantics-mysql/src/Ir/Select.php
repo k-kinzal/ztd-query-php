@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\CaseLayout;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
 use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
@@ -61,12 +62,14 @@ final class Select implements SemanticsIR
         public readonly bool $distinct = false,
         array $orderBy = [],
         public readonly ?Limit $limit = null,
+        public readonly ProjectionMode $mode = ProjectionMode::Empty,
     ) {
         $results = Check::listOf($columns, ResultColumn::class, 'A SELECT needs a nonempty list of result columns.', 1);
         (new SelectBounds())->check($results, $source, $where, !$distinct && $orderBy === [] && $limit === null);
         if ($source instanceof Join) {
             foreach ($source->inputs() as $input) {
                 Check::input(!$input instanceof DerivedSource || $input->definition->release === $release, 'A derived input must use its owning SELECT release.');
+                Check::input(!$input instanceof DerivedSource || $input->definition->mode === $mode, 'A derived input must use its owning SELECT lexical mode.');
             }
         }
         $this->columns = $results;
@@ -95,7 +98,7 @@ final class Select implements SemanticsIR
     {
         $optimization = $this->release === GrammarRelease::MySql5651 ? 'materialized' : 'derived-merge=on';
 
-        return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/' . $optimization;
+        return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=' . $this->mode->value . '/native/' . $optimization;
     }
 
     /**

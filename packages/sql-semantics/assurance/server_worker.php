@@ -305,6 +305,8 @@ function constructSelect(string $platform, array $input): SemanticsIR
         $input['distinct'] ?? false,
         $keys,
         $bound,
+        ...($input['dialect'] === 'mysql' && isset($input['projectionMode'])
+            ? [SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::from($input['projectionMode'])] : []),
     );
 }
 
@@ -312,6 +314,15 @@ function analyzeStatement(string $platform, array $input): SemanticsIR
 {
     $class = $platform . 'Semantics';
     $searchPath = $platform . 'Model\\Contract\\SearchPath';
+    if ($input['dialect'] === 'mysql' && isset($input['projectionMode'])) {
+        $path = new $searchPath($input['currentDatabase'] ?? 'ir_fixture');
+        $mode = SqlSemantics\Platform\MySql\Mode::fromString($input['projectionMode'] === 'empty' ? '' : $input['projectionMode']);
+        $semantics = new $class($input['release'], $mode, searchPath: $path);
+        $catalog = ($input['incompatibleProjectionContext'] ?? false) === true
+            ? new $class($input['release'], searchPath: $path) : $semantics;
+
+        return $semantics->analyze($input['sql'], $catalog->context($input['declarations'] ?? null));
+    }
     $semantics = isset($input['currentCatalog'])
         ? new $class($input['release'], searchPath: new $searchPath(...$input['schemaPath']),
             currentDatabase: new SqlSemantics\Platform\PostgreSql\Ir\Identifier($input['currentCatalog']))
@@ -335,7 +346,7 @@ function observeSource(object $source, string $dialect, string $namespace, bool 
     }
 
     if ($source::class === $namespace . 'From\\DerivedSource') {
-        $derived = ['derived' => observeSetQuery($namespace, $source->definition, $dialect)];
+        $derived = ['derived' => observeSetQuery($namespace, $source->definition, $dialect, $exactIntegral)];
         if ($dialect === 'mysql' && $source->inheritsRequestedAliases) {
             $derived['inheritsRequestedAliases'] = true;
         }
@@ -528,22 +539,22 @@ function observeSetQuery(string $namespace, object $value, string $dialect, bool
     if ($value::class === $namespace . 'Rows\\With\\WithProjection') {
         return ['with' => [
             'definitions' => array_map(static fn ($entry): array => [
-                $dialect === 'mysql' ? '' : $entry->materialization->value, observeSetQuery($namespace, $entry->body, $dialect),
+                $dialect === 'mysql' ? '' : $entry->materialization->value, observeSetQuery($namespace, $entry->body, $dialect, $exactIntegral),
             ], $value->definitions),
-            'body' => observeSetQuery($namespace, $value->body, $dialect),
+            'body' => observeSetQuery($namespace, $value->body, $dialect, $exactIntegral),
         ]];
     }
     if ($value::class === $namespace . 'Rows\\Compound') {
         return ['compound' => [
-            'left' => observeSetQuery($namespace, $value->left, $dialect),
-            'right' => observeSetQuery($namespace, $value->right, $dialect),
+            'left' => observeSetQuery($namespace, $value->left, $dialect, $exactIntegral),
+            'right' => observeSetQuery($namespace, $value->right, $dialect, $exactIntegral),
             'operator' => $value->operator->value,
             'all' => $value->all,
         ]];
     }
     if ($value::class === $namespace . 'Rows\\LocalProjection') {
         $local = [
-            'definition' => observeSetQuery($namespace, $value->definition, $dialect),
+            'definition' => observeSetQuery($namespace, $value->definition, $dialect, $exactIntegral),
             'columns' => array_map(static fn ($column): array => [$column->slot, $column->name->value], $value->columns),
         ];
         if ($dialect === 'mysql' && $value->inheritsRequestedAliases) {

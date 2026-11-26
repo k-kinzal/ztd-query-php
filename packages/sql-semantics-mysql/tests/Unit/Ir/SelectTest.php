@@ -7,9 +7,13 @@ namespace Tests\Unit\Ir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SearchedCaseArm;
 use SqlSemantics\Platform\MySql\Ir\Expression\Choice\SignedCase;
+use SqlSemantics\Platform\MySql\Ir\From\DerivedSource;
+use SqlSemantics\Platform\MySql\Ir\From\Join;
+use SqlSemantics\Platform\MySql\Ir\From\JoinKind;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\NullLiteral;
@@ -36,6 +40,18 @@ final class SelectTest extends TestCase
         $select = new Select([new ResultColumn(new IntegerLiteral('2'), new Identifier('a'))]);
 
         self::assertStringStartsWith('mysql-9.1.0/', $select->profileId());
+    }
+
+    public function testRefusesADerivedJoinInputInAnotherLexicalMode(): void
+    {
+        $column = new ResultColumn(new IntegerLiteral('3'), new Identifier('n'));
+        $ansi = new DerivedSource(new Select([$column], mode: ProjectionMode::AnsiQuotes));
+        $ordinary = new DerivedSource(new Select([$column]));
+        $input = new Join(JoinKind::Cross, $ansi, $ordinary);
+
+        $this->expectExceptionMessage('A derived input must use its owning SELECT lexical mode.');
+
+        new Select([$column], $input, mode: ProjectionMode::AnsiQuotes);
     }
 
     public function testRefusesUnboundColumnSlots(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Ir\Mutation;
 
 use SqlSemantics\Platform\MySql\Ir\Arithmetic;
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\ColumnReference;
 use SqlSemantics\Platform\MySql\Ir\Expression\CollatedText;
 use SqlSemantics\Platform\MySql\Ir\From\ColumnKind;
@@ -38,6 +39,7 @@ final class InsertQuery implements SemanticsIR
      */
     public function __construct(public readonly TableSource $target, public readonly Select $query)
     {
+        Check::input($query->mode === ProjectionMode::Empty, 'A query INSERT requires empty sql_mode.');
         Check::input($target->kind->isTable(), 'An INSERT target must be a base table.');
         $width = count($target->columns);
         Check::input($width >= 1 && $width <= 1024, 'A query INSERT needs between one and 1024 target columns.');

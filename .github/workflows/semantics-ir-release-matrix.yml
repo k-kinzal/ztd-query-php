@@ -450,6 +450,21 @@ jobs:
             --candidate candidate \
             --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
             --out "$RUNNER_TEMP/semantics-ir-mysql-text-literal-evidence"
+      - name: Compare MySQL ANSI_QUOTES and empty-mode projections
+        if: ${{ !cancelled() && matrix.engine == 'mysql' }}
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+          ENGINE: ${{ matrix.engine }}
+          RELEASE: ${{ matrix.release }}
+          ZTD_IR_MYSQL_DSN: mysql:host=127.0.0.1;port=${{ job.services.database.ports[matrix.port] }};dbname=ir_fixture;charset=utf8mb4
+          ZTD_IR_MYSQL_USER: root
+          ZTD_IR_MYSQL_PASSWORD: ir_fixture
+        run: |
+          python3 trusted/packages/sql-semantics/assurance/run_server_mysql_ansi_projection.py \
+            --engine "$ENGINE" --release "$RELEASE" \
+            --candidate candidate \
+            --tool-autoload trusted/packages/sql-semantics-sqlite/vendor/autoload.php \
+            --out "$RUNNER_TEMP/semantics-ir-mysql-ansi-projection-evidence"
       - name: Compare MySQL native VARCHAR projections
         if: ${{ !cancelled() && matrix.engine == 'mysql' }}
         env:
@@ -3271,6 +3286,12 @@ jobs:
         with:
           name: native-mysql-text-literal-${{ matrix.engine }}-${{ matrix.release }}
           path: ${{ runner.temp }}/semantics-ir-mysql-text-literal-evidence/
+      - name: Preserve MySQL projection-mode observations and any failure
+        if: ${{ always() && matrix.engine == 'mysql' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-mysql-ansi-projection-${{ matrix.engine }}-${{ matrix.release }}
+          path: ${{ runner.temp }}/semantics-ir-mysql-ansi-projection-evidence/
       - name: Preserve MySQL VARCHAR observations and any failure
         if: ${{ always() && matrix.engine == 'mysql' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

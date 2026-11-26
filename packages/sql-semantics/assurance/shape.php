@@ -247,6 +247,9 @@ if ($dialect === 'mysql') {
     $enumCases['From\\ExternalRelationKind'] = ['BaseTable' => 'table', 'TemporaryTable' => 'temporary-table', 'View' => 'view'];
     $methods['From\\ExternalRelationKind'] = ['isTable'];
     $enumCases['From\\TextCollation'] = ['Utf8mb4Bin' => 'utf8mb4_bin'];
+    $properties['Select']['mode'] = ['Binding\\ProjectionMode'];
+    $properties['Binding\\ProjectionMode'] = $methods['Binding\\ProjectionMode'] = [];
+    $enumCases['Binding\\ProjectionMode'] = ['Empty' => 'empty', 'AnsiQuotes' => 'ANSI_QUOTES'];
     $enumCases['Predicate\\Text\\TextOperator'] = ['Equal' => '=', 'NullSafeEqual' => '<=>', 'NotEqual' => '<>',
         'Less' => '<', 'LessOrEqual' => '<=', 'Greater' => '>', 'GreaterOrEqual' => '>='];
 }

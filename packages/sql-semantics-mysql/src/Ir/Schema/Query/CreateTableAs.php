@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Schema\Query;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\From\ExternalRelationKind;
 use SqlSemantics\Platform\MySql\Ir\Schema\Identity\TableIdentity;
 use SqlSemantics\Platform\MySql\Ir\Schema\TableColumn;
@@ -41,6 +42,7 @@ final class CreateTableAs implements SemanticsIR
         public readonly bool $ifNotExists = false,
         array $declaredColumns = [],
     ) {
+        Check::input($query->mode === ProjectionMode::Empty, 'CREATE TABLE AS requires empty sql_mode.');
         $columns = Check::listOf($declaredColumns, TableColumn::class, 'CREATE TABLE AS requires an ordered list of explicit columns.');
         $layout = new CreateAsLayout();
         $layout->query($query);
