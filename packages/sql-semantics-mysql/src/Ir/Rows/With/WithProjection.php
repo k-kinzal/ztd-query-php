@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Ir\Rows\With;
 
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Rows\LocalProjection;
 use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
@@ -36,6 +37,7 @@ final class WithProjection implements SemanticsIR
         array $definitions,
         public readonly Select|LocalProjection|WithRead $body,
         public readonly GrammarRelease $release = GrammarRelease::MySql910,
+        public readonly ProjectionMode $mode = ProjectionMode::Empty,
     ) {
         Check::input($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744, 'WITH requires MySQL 8.0 or later.');
         $checked = Check::listOf($definitions, WithDefinition::class, 'WITH needs a nonempty ordered definition list.', 1);
@@ -61,7 +63,7 @@ final class WithProjection implements SemanticsIR
      */
     public function profileId(): string
     {
-        return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=empty/native/derived-merge=on';
+        return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=' . $this->mode->value . '/native/derived-merge=on';
     }
 
     /**

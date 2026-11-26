@@ -449,7 +449,13 @@ function constructWith(string $platform, array $input): SemanticsIR
         $body = constructWithMember($platform, $query, $input['dialect'], $input['release']);
         $definitions[] = $input['dialect'] === 'mysql' ? new $def($body) : new $def($body, $policy::from($materialization));
     }
-    return new $type($definitions, constructWithMember($platform, $with['body'], $input['dialect'], $input['release']), $release::from($input['release']));
+    return new $type(
+        $definitions,
+        constructWithMember($platform, $with['body'], $input['dialect'], $input['release']),
+        $release::from($input['release']),
+        ...($input['dialect'] === 'mysql' && isset($input['projectionMode'])
+            ? [SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::from($input['projectionMode'])] : []),
+    );
 }
 
 function constructWithMember(string $platform, array $input, string $dialect, string $release): object

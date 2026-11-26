@@ -1,0 +1,93 @@
+{
+  "revision": "SemanticsIR/mysql-ansi-with-boundaries-1",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "related": "mysql-ansi-with-v1.json",
+  "rules": {
+    "SelectLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$profile = $operation->context->profile;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($profile->parameters === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\ParameterStyle::Native, 'The projection requires the native language profile.');",
+        "$mode = $this->mode($profile->lexical);",
+        "$statement = $operand ?? $operation->statement;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'Complete MySQL IR currently supports a single projection SELECT.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($statement->groupBy === null && $statement->having === null && $statement->windows === [] && $statement->qualify === null && $statement->procedure === null && $statement->locking === [] && $statement->into === null && $statement->late === null && ($statement->options === [] || $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::All] || $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::Distinct]), 'Complete MySQL IR currently supports projections with positional result selection.');",
+        "$binding = \\SqlSemantics\\Platform\\MySql\\Ir\\From\\JoinBinding::bind($operation, $statement->from instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Relation\\Dual ? null : $statement->from);",
+        "$where = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Predicate\\PredicateLowering())->lower($statement->where, $binding);",
+        "$results = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ProjectionColumns())->lower($operation, $statement, $binding);",
+        "$result = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\ResultLowering();",
+        "$order = [];",
+        "foreach ($statement->orderBy as $key) {",
+        "    $order[] = $result->order($key);",
+        "}",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Select($results, $binding->source(), $profile->grammar, $where, $statement->options === [\\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectOption::Distinct], $order, $result->limit($statement->limit), $mode);"
+      ]
+    },
+    "SelectLowering::mode": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return match (true) {",
+        "    $lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings()) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::Empty,",
+        "    $lexical->equals(new \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\LexicalSettings('ANSI_QUOTES')) => \\SqlSemantics\\Platform\\MySql\\Ir\\Binding\\ProjectionMode::AnsiQuotes,",
+        "    default => throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('A complete projection requires either empty sql_mode or ANSI_QUOTES.'),",
+        "};"
+      ]
+    },
+    "Rows/With/WithProjection::__construct": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 && $release !== \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744, 'WITH requires MySQL 8.0 or later.');",
+        "$checked = \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::listOf($definitions, \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithDefinition::class, 'WITH needs a nonempty ordered definition list.', 1);",
+        "$scope = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithScope();",
+        "$headings = [];",
+        "foreach ($checked as $definition) {",
+        "    $headings[] = $scope->width($definition->body, $headings, $this->profileId());",
+        "}",
+        "$scope->width($body, $headings, $this->profileId());",
+        "$this->definitions = $checked;"
+      ]
+    },
+    "Rows/With/WithProjection::profileId": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "return $this->release->value . '/utf8mb4/lower-case-table-names=0/sql-mode=' . $this->mode->value . '/native/derived-merge=on';"
+      ]
+    },
+    "Rows/With/WithLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$with = $statement->with;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($with instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\With\\With && !$with->recursive && $statement->orderBy === [] && $statement->limit === null, 'WITH requires ordinary definitions and a checked SELECT body.');",
+        "$positions = [];",
+        "$definitions = [];",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Ordering\\LocalProjectionAliases();",
+        "foreach ($with->tables as $position => $table) {",
+        "    $definition = $this->query($operation, $table->query, $positions);",
+        "    if ($table->columns === []) {",
+        "        $aliases->check($definition);",
+        "    }",
+        "    $definitions[] = new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithDefinition($definition);",
+        "    $positions[spl_object_id($table)] = $position;",
+        "}",
+        "$body = $this->query($operation, $statement->body, $positions);",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!$body instanceof \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection, 'An ordinary WITH requires a SELECT body in its own scope.');",
+        "$profile = $operation->context->profile;",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Rows\\With\\WithProjection($definitions, $body, $profile->grammar, (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->mode($profile->lexical));"
+      ]
+    }
+  }
+}

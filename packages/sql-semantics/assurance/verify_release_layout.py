@@ -12,8 +12,8 @@ from tempfile import TemporaryDirectory
 from run import IMAGE, PACKAGES, TOOL, Failure, candidate_distribution, digest, require, verify_candidate, write_json
 from scope import constructor_scope, declared_constructors, publication_definition
 
-CONTRACT_NAME = "release-layout-v210.json"
-CONTRACT = "97c25e922f5933384633f42e78dd452145edcdc77d7da8b57046dabbfd1a0b26"
+CONTRACT_NAME = "release-layout-v211.json"
+CONTRACT = "24b0a6280d95410f6d64cfc443afca22b73c8590b737741dbf1e57a07260296a"
 DIALECTS = {"MySql": "mysql", "PostgreSql": "postgres", "Sqlite": "sqlite"}
 
 
@@ -234,6 +234,12 @@ def verify_probe(raw, catalog):
             require(item.get("viewInput") == ["main", "removable", "view", ["id"], 0],
                     "installed-external-view-input-mismatch", item)
         if (item["platform"], item["role"]) == ("MySql", "Rows\\With\\WithProjection"):
+            require(item.get("withMode") == [
+                True, True, "mysql-8.4.7/utf8mb4/lower-case-table-names=0/sql-mode=ANSI_QUOTES/native/derived-merge=on", 0, 1,
+                'WITH `__ztd_cte_0` AS (SELECT 7 AS `__ztd_c0`), '
+                '`__ztd_cte_1` AS (SELECT `__ztd_cte_0`.`__ztd_c0` AS `__ztd_c0` FROM `__ztd_cte_0`) '
+                'SELECT `__ztd_cte_1`.`__ztd_c0` AS `answer` FROM `__ztd_cte_1`',
+            ], "installed-mysql-with-mode-mismatch", item)
             require(item.get("withCoordinates") == [0, 0, 1, 0, 1] and item["sql"] ==
                     'WITH `__ztd_cte_0` AS (SELECT 42 AS `__ztd_c0`), '
                     '`__ztd_cte_1` AS (SELECT `__ztd_cte_0`.`__ztd_c0` AS `__ztd_c0` FROM `__ztd_cte_0`) '

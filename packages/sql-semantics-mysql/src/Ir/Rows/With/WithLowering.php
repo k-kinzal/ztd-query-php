@@ -48,8 +48,9 @@ final class WithLowering
         }
         $body = $this->query($operation, $statement->body, $positions);
         Check::input(!$body instanceof WithProjection, 'An ordinary WITH requires a SELECT body in its own scope.');
+        $profile = $operation->context->profile;
 
-        return new WithProjection($definitions, $body, $operation->context->profile->grammar);
+        return new WithProjection($definitions, $body, $profile->grammar, (new SelectLowering())->mode($profile->lexical));
     }
 
     /**

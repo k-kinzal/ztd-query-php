@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Ir\Select;
 use SqlSemantics\Platform\MySql\Ir\SelectLowering;
 use SqlSemantics\Platform\MySql\Ir\TableSource;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Model\Contract\LexicalSettings;
 use SqlSemantics\Platform\MySql\Semantics;
 use SqlSemantics\Testing\MySql\Inspection;
 
@@ -23,6 +24,21 @@ use SqlSemantics\Testing\MySql\Inspection;
 #[Small]
 final class SelectLoweringTest extends TestCase
 {
+    public function testModeUsesExactLexicalSettings(): void
+    {
+        $lowering = new SelectLowering();
+
+        self::assertSame(ProjectionMode::Empty, $lowering->mode(new LexicalSettings()));
+        self::assertSame(ProjectionMode::AnsiQuotes, $lowering->mode(new LexicalSettings('ANSI_QUOTES')));
+    }
+
+    public function testModeRefusesAnUnrepresentedCombination(): void
+    {
+        $this->expectExceptionMessage('A complete projection requires either empty sql_mode or ANSI_QUOTES.');
+
+        (new SelectLowering())->mode(new LexicalSettings('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
+    }
+
     public function testAnalyzeBindsBothQuotedOccurrencesToTheSameField(): void
     {
         $analyzer = new Semantics(mode: new Mode(ansiQuotes: true));

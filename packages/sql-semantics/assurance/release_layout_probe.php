@@ -88,6 +88,29 @@ function observeMysqlProjectionModes(SqlSemantics\Platform\MySql\Semantics $ordi
         $text->profileId(), $text->columns[0]->expression->value, $text->toString()];
 }
 
+function observeMysqlWithMode(): array
+{
+    $analyzer = new SqlSemantics\Platform\MySql\Semantics(mode: new SqlSemantics\Platform\MySql\Mode(ansiQuotes: true));
+    $input = 'WITH "a" AS (SELECT 7 AS "n"), "b" AS (SELECT "n" FROM "a") SELECT "n" AS "answer" FROM "b"';
+    $analyzed = $analyzer->analyze($input);
+    [$batch] = $analyzer->analyzeAll($input);
+    $name = new SqlSemantics\Platform\MySql\Ir\Identifier('n');
+    $release = $analyzer->profile()->grammar;
+    $mode = SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode::AnsiQuotes;
+    $seed = new SqlSemantics\Platform\MySql\Ir\Select([
+        new SqlSemantics\Platform\MySql\Ir\ResultColumn(new SqlSemantics\Platform\MySql\Ir\IntegerLiteral('7'), $name),
+    ], release: $release, mode: $mode);
+    $first = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition($seed);
+    $second = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithDefinition(
+        new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(0, [new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, $name)]),
+    );
+    $heading = new SqlSemantics\Platform\MySql\Ir\Rows\LocalResultColumn(0, new SqlSemantics\Platform\MySql\Ir\Identifier('answer'));
+    $consumer = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithRead(1, [$heading]);
+    $direct = new SqlSemantics\Platform\MySql\Ir\Rows\With\WithProjection([$first, $second], $consumer, $release, $mode);
+    return [$analyzed == $direct, $batch == $direct, $analyzed->profileId(), $analyzed->definitions[1]->body->definition,
+        $analyzed->body->definition, $analyzed->toString()];
+}
+
 function observeMysqlNullableHaving(SqlSemantics\Platform\MySql\Semantics $semantics): array
 {
     $context = $semantics->context(['CREATE TABLE app.having_rows (amount INT)']);
@@ -2512,6 +2535,7 @@ foreach (['MySql' => 'app', 'PostgreSql' => 'public', 'Sqlite' => 'main'] as $pl
             $details['dropView'] = [$result->targets[0]->schema->value, $result->targets[0]->view->value, $result->ifExists];
         }
         if ($platform === 'MySql' && $role === 'Rows\With\WithProjection') {
+            $details['withMode'] = observeMysqlWithMode();
             $predecessor = $result->definitions[1]->body;
             $body = $result->body;
             $details['withCoordinates'] = [$predecessor->definition, $predecessor->columns[0]->slot,

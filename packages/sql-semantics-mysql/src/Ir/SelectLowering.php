@@ -33,11 +33,7 @@ final class SelectLowering
     {
         $profile = $operation->context->profile;
         Check::input($profile->parameters === ParameterStyle::Native, 'The projection requires the native language profile.');
-        $mode = match (true) {
-            $profile->lexical->equals(new LexicalSettings()) => ProjectionMode::Empty,
-            $profile->lexical->equals(new LexicalSettings('ANSI_QUOTES')) => ProjectionMode::AnsiQuotes,
-            default => throw new InvalidConstruction('A complete projection requires either empty sql_mode or ANSI_QUOTES.'),
-        };
+        $mode = $this->mode($profile->lexical);
         $statement = $operand ?? $operation->statement;
         Check::input($statement instanceof ParsedSelect, 'Complete MySQL IR currently supports a single projection SELECT.');
         Check::input(
@@ -68,5 +64,18 @@ final class SelectLowering
             $result->limit($statement->limit),
             $mode,
         );
+    }
+
+    /**
+     * Selects the closed projection mode shared by the enclosing query and its members.
+     * @throws InvalidConstruction When the lexical mode has no complete projection representation
+     */
+    public function mode(LexicalSettings $lexical): ProjectionMode
+    {
+        return match (true) {
+            $lexical->equals(new LexicalSettings()) => ProjectionMode::Empty,
+            $lexical->equals(new LexicalSettings('ANSI_QUOTES')) => ProjectionMode::AnsiQuotes,
+            default => throw new InvalidConstruction('A complete projection requires either empty sql_mode or ANSI_QUOTES.'),
+        };
     }
 }

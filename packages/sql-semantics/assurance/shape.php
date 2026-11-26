@@ -1042,6 +1042,9 @@ if ($dialect !== 'sqlite') {
         ];
         $properties[$withRead] = ['definition' => ['int'], 'columns' => ['array']];
         $properties[$withDefinition] = ['body' => ['Rows\\LocalProjection', $with, $withRead, 'Select']];
+        if ($dialect === 'mysql') {
+            $properties[$with]['mode'] = ['Binding\\ProjectionMode'];
+        }
         if ($dialect === 'postgres') {
             $localValues = 'Rows\\Values\\ValuesQuery';
             $properties['Rows\\LocalProjection']['definition'] = ['Rows\\LocalProjection', $localValues, $with, 'Select'];
@@ -2661,6 +2664,7 @@ try {
                     array_filter($class->getMethods(), static fn ($method) => $method->isPublic()),
                 ));
                 $expectedMethods = match ($short) {
+                    'SelectLowering' => $dialect === 'mysql' ? ['lower', 'mode'] : ['lower'],
                     'Aggregation\\GroupedLowering' => ['applies', 'lower'],
                     'Schema\\Index\\DropIndexLowering' => $dialect === 'mysql' ? ['lower', 'identity', 'removal', 'index'] : ['lower'],
                     'Schema\\Truncate\\TruncateLowering' => $dialect === 'mysql' ? ['lower', 'referrers'] : ['lower'],
@@ -2669,6 +2673,10 @@ try {
                 };
                 requireShape($publicMethods === $expectedMethods, "Unexpected lowering entry point in $short");
                 requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . $loweringRole, "Lowering return role differs in $short");
+                if ($short === 'SelectLowering' && $dialect === 'mysql') {
+                    requireShape($class->getMethod('mode')?->returnType?->toString() === $prefix . 'Binding\\ProjectionMode',
+                        'The MySQL projection mode lowerer must return a closed mode');
+                }
             }
         }
         if ($short === 'SelectSql') {

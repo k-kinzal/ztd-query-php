@@ -7,6 +7,7 @@ namespace Tests\Unit\Ir\Rows\With;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Ir\Binding\ProjectionMode;
 use SqlSemantics\Platform\MySql\Ir\Identifier;
 use SqlSemantics\Platform\MySql\Ir\IntegerLiteral;
 use SqlSemantics\Platform\MySql\Ir\ResultColumn;
@@ -36,6 +37,16 @@ final class WithProjectionTest extends TestCase
         $query = new WithProjection([new WithDefinition($body)], $read);
 
         self::assertSame($body->profileId(), $query->profileId());
+    }
+
+    public function testRefusesAnOwnedQueryFromAnotherMode(): void
+    {
+        $column = new ResultColumn(new IntegerLiteral('1'), new Identifier('value'));
+        $definition = new WithDefinition(new Select([$column], mode: ProjectionMode::AnsiQuotes));
+        $body = new Select([$column]);
+        $this->expectExceptionMessage('Each WITH query must use its owning language profile.');
+
+        new WithProjection([$definition], $body, mode: ProjectionMode::AnsiQuotes);
     }
 
     public function testToStringUsesTheExactLocalSlot(): void
