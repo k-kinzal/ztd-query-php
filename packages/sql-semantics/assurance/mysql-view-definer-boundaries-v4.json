@@ -1,0 +1,59 @@
+{
+  "revision": "SemanticsIR/mysql-view-definer-boundaries-4",
+  "approval": "pending-human-review",
+  "base": {
+    "path": "native-boundaries-v31.json",
+    "sha256": "3fca83f52f260bf9f43b909228eeed7f00d77534d2183368b530673364738b55"
+  },
+  "versionedFrom": {
+    "path": "mysql-view-definer-boundaries-v3.json",
+    "sha256": "25bf2d27733dd6ea3074c9a03ac42bd131a8345d74be8e6800c27ea8d086d551"
+  },
+  "related": "mysql-create-view-v12.json",
+  "rules": {
+    "Schema/View/CreateViewLowering::lower": {
+      "dialects": [
+        "mysql"
+      ],
+      "common": [
+        "$definition = $statement->definition;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(!($statement->orReplace && $definition->ifNotExists), 'CREATE VIEW needs one admitted creation policy.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($definition->query instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\Select, 'A checked view requires one ordinary SELECT block.');",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($operation->context->relationNames === \\SqlSemantics\\Platform\\MySql\\Model\\Statement\\Identifier\\Comparison::Sensitive, 'CREATE VIEW requires the native case-sensitive relation profile.');",
+        "$schema = ($definition->name->schema ?? $operation->context->declarationSchema)->value;",
+        "\\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input($schema !== \\SqlSemantics\\Platform\\MySql\\Rules\\SessionDatabase::UNNAMED && $definition->name->catalog === null, 'CREATE VIEW requires an absolute view identity.');",
+        "$name = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewName(new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($schema), new \\SqlSemantics\\Platform\\MySql\\Ir\\Identifier($definition->name->name->value));",
+        "$aliases = new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewProjectionAliases();",
+        "foreach ($definition->query->items as $item) {",
+        "    if ($item instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Query\\SelectExpression && $item->alias !== null) {",
+        "        $aliases->check($item->alias->value);",
+        "    }",
+        "}",
+        "$query = (new \\SqlSemantics\\Platform\\MySql\\Ir\\SelectLowering())->lower($operation, $definition->query);",
+        "$columns = (new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewHeadingLowering())->lower($operation, $definition, $query);",
+        "$policy = match (true) {",
+        "    $statement->orReplace => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Replace,",
+        "    $definition->ifNotExists => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::Preserve,",
+        "    default => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCreationPolicy::RequireNew,",
+        "};",
+        "$check = match ($definition->check) {",
+        "    null => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::None,",
+        "    \\SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption::Local => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::Local,",
+        "    \\SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption::Unqualified, \\SqlSemantics\\Platform\\MySql\\Statement\\View\\ViewCheckOption::Cascaded => \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewCheckOption::Cascaded,",
+        "};",
+        "$account = $definition->definer;",
+        "if ($account instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName && $account->host !== null && ($query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 || $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5744)) {",
+        "    $maximum = $query->release === \\SqlSemantics\\Platform\\MySql\\Model\\Contract\\GrammarRelease::MySql5651 ? 16 : 32;",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(preg_match('/\\A.{0,' . $maximum . '}\\z/usD', $account->user->value) === 1, 'An explicit MySQL definer user exceeds the native character limit of this release.');",
+        "    \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\Check::input(strlen($account->host->value) <= 60, 'A MySQL 5.6 or 5.7 view definer host permits at most 60 bytes.');",
+        "}",
+        "$definer = match (true) {",
+        "    $account === null, $account instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\CurrentUser => null,",
+        "    $account instanceof \\SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName => new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewDefiner($account->user->value, $account->host->value ?? '%'),",
+        "    default => throw new \\SqlSemantics\\Platform\\MySql\\Model\\Diagnostic\\InvalidConstruction('A view definer must select the current user or a named account.'),",
+        "};",
+        "return new \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\CreateView($name, $query, $columns, $policy, \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewAlgorithm::from($definition->algorithm->value ?? 'UNDEFINED'), \\SqlSemantics\\Platform\\MySql\\Ir\\Schema\\View\\ViewSecurity::from($definition->security->value ?? 'DEFINER'), $check, $definer);"
+      ]
+    }
+  }
+}

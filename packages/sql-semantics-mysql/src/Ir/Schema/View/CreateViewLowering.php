@@ -68,7 +68,7 @@ final class CreateViewLowering
         }
         $definer = match (true) {
             $account === null, $account instanceof CurrentUser => null,
-            $account instanceof AccountName => new ViewDefiner($account->user->value, $account->host?->value ?? '%'),
+            $account instanceof AccountName => new ViewDefiner($account->user->value, $account->host->value ?? '%'),
             default => throw new InvalidConstruction('A view definer must select the current user or a named account.'),
         };
 

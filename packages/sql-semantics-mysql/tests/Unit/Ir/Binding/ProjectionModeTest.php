@@ -17,4 +17,12 @@ final class ProjectionModeTest extends TestCase
     {
         self::assertSame(['empty', 'ANSI_QUOTES', 'NO_BACKSLASH_ESCAPES', 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES'], array_column(ProjectionMode::cases(), 'value'));
     }
+
+    public function testEscapesBackslashFollowsTheOwningMode(): void
+    {
+        self::assertTrue(ProjectionMode::Empty->escapesBackslash());
+        self::assertTrue(ProjectionMode::AnsiQuotes->escapesBackslash());
+        self::assertFalse(ProjectionMode::NoBackslashEscapes->escapesBackslash());
+        self::assertFalse(ProjectionMode::AnsiQuotesAndNoBackslashEscapes->escapesBackslash());
+    }
 }
