@@ -91,7 +91,7 @@ CONTRACTS = {
     "mysql-foreign-key-enumeration-evidence-v2.json": "cd01a0d2fb9a7d5327aa98b63dd4e537d6e1353f42c772284413ff702732d2b9",
     "mysql-index-visibility-evidence-v2.json": "3df7302bfb4250558f066791f67b25f47196896ccd7c362b53feb8c08b1d28d7",
     "mysql-session-table-sources-v1.json": "95d14286022d773b97560ef85af6e4fd761877169fbe28e5234e80a4941e7e9d",
-    "mysql-create-view-v9.json": "3b9969543b900df7384dcf5dc0b08b8c1497992c1d6b19dd42b8c48d6dd5fc74",
+    "mysql-create-view-v10.json": "51afb7335924506a5c9172fd6c2c8ec4b752c70f1385c71e739055dd8f585912",
     "mysql-with-projection-v1.json": "1bcb961bb9c33ed3c8464175e9fd413adc01ad5322a4a45ef81156e145b82f58",
     "mysql-ansi-with-v1.json": "12556b2fcf97ddfec738f4666ac6d767a885bb7ddb2f3ad10bbf09711d9dbccd",
     "mysql-grouped-having-v2.json": "85cdba2d69bb1e59b56b4c734197cabd6dfc8434bf7b38bd88b877e35dd812a1",

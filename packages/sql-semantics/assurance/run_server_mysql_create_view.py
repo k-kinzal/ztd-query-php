@@ -18,8 +18,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v9.json"
-CONTRACT = "3b9969543b900df7384dcf5dc0b08b8c1497992c1d6b19dd42b8c48d6dd5fc74"
+CONTRACT_NAME = "mysql-create-view-v10.json"
+CONTRACT = "51afb7335924506a5c9172fd6c2c8ec4b752c70f1385c71e739055dd8f585912"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
@@ -30,6 +30,8 @@ COMPARATOR_FAULTS = {
     "Ignore a missing native view fallback warning while still comparing the installed catalog": "missing-fallback",
     "Ignore an incorrect affected row count after a permitted write through an otherwise matching view": "incorrect-write-count",
     "Compare native rows and security but ignore the installed definer identity": "wrong-definer-catalog",
+    "Accept the entire account in the diagnostic when the native message prints only a prefix": "unbounded-definer-note",
+    "Accept a catalog account shortened to the text displayed in the diagnostic": "truncated-definer-catalog",
 }
 SCHEMA, MAIN, DECOY, BASE = "ir_fixture", "ir_cv_main", "ir_cv_decoy", "ir_cv_source"
 TARGET = f"{SCHEMA}.{MAIN}"
@@ -561,8 +563,9 @@ def prediction(item):
         principal = view.get("definer")
         absent = principal is not None and principal != definers.GRANTED and principal not in definers.UNPRIVILEGED
         if absent:
-            user, host = principal
-            diagnostics.append(["Note", 1449, f"The user specified as a definer ('{user}'@'{host}') does not exist"])
+            width = specifications()[0]["definerDiagnostic"]
+            user, host = (definers.diagnostic_component(part, width["componentBytes"]) for part in principal)
+            diagnostics.append([width["level"], width["code"], f"The user specified as a definer ('{user}'@'{host}') does not exist"])
         for state in (initial, after, later):
             for record in state["views"].values():
                 record["definer"] = definers.ACCOUNT
@@ -682,12 +685,25 @@ def controls():
     check_observation(named, catalog, "named view privilege control")
     wrong_principal = deepcopy(catalog)
     wrong_principal["after"]["views"][MAIN]["definer"] = definers.ACCOUNT
+    _, long_principal = definers.finite_cases(case("mysql-9.1.0", scan(), security="INVOKER"), "host-multibyte")
+    long_catalog = prediction(long_principal)
+    check_observation(long_principal, long_catalog, "full definer identity and bounded note control")
+    user, host = long_principal["createView"]["definer"]
+    unbounded_note = {**long_catalog, "diagnostics": [
+        ["Note", 1449, f"The user specified as a definer ('{user}'@'{host}') does not exist"],
+    ]}
+    shortened = deepcopy(long_catalog)
+    short_identity = user + "@" + definers.diagnostic_component(host, 64)
+    shortened["after"]["views"][MAIN]["definer"] = short_identity
+    shortened["afterSourceChange"]["views"][MAIN]["definer"] = short_identity
     observed = {}
     for key, case_, mismatch in (
         ("wrong-security", item, wrong),
         ("missing-fallback", fallback, {**merged, "diagnostics": []}),
         ("incorrect-write-count", checked, {**effects, "writeEffects": wrong_count}),
         ("wrong-definer-catalog", named, wrong_principal),
+        ("unbounded-definer-note", long_principal, unbounded_note),
+        ("truncated-definer-catalog", long_principal, shortened),
     ):
         try:
             check_observation(case_, mismatch, key)

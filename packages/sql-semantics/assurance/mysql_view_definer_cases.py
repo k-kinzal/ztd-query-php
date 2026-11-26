@@ -40,6 +40,12 @@ def identity(tag, role):
     if role == "host-maximum":
         principal = ["actor", "h" * host_limit]
         return principal, principal
+    if role == "user-multibyte":
+        principal = ["棚" * user_limit, "localhost"]
+        return principal, principal
+    if role == "host-multibyte":
+        principal = ["actor", "ab" + "棚" * 38]
+        return principal, principal
     return ACCOUNTS[role]
 
 
@@ -57,7 +63,8 @@ def coordinates(specification, analysis):
     expected = {(algorithm, security, role)
                 for role in (*SESSION, *ACCOUNTS) if analysis or role not in {"session-keyword", "session-call"}
                 for security in ("definer", "invoker") for algorithm in ("automatic", "merge")}
-    expected.update({("automatic", "invoker", "user-maximum"), ("automatic", "invoker", "host-maximum")})
+    expected.update({("automatic", "invoker", role)
+                     for role in ("user-maximum", "host-maximum", "user-multibyte", "host-multibyte")})
     cap = spec["identities"]["analysis" if analysis else "direct"] + spec["widthWitnesses"]["identitiesPerRoute"]
     actual = list(grid(specification, analysis))
     require(len(actual) == len(expected) == cap and set(actual) == expected, "mysql-definer-finite-size")
@@ -68,6 +75,10 @@ def known(specification, tag):
     user, host = limits(tag)
     same(user, specification["definerLimits"]["userCharacters"].get(tag, 32))
     same(host, specification["definerLimits"]["hostCharacters"].get(tag, 255))
+
+
+def diagnostic_component(component, limit):
+    return component.encode("utf-8")[:limit].decode("utf-8", errors="ignore")
 
 
 def text(value):
