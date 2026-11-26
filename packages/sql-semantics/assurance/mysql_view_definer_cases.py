@@ -46,27 +46,38 @@ def identity(tag, role):
     if role == "host-multibyte":
         principal = ["actor", "棚" * 20 if host_limit == 60 else legacy_overflow_host()]
         return principal, principal
+    if role == "edge-ascii-whitespace":
+        return ["\t\n\v\f\rActor \t", "\t\rLOCALHOST\n\f\v"], ["Actor", "localhost"]
+    if role == "host-cap-with-padding":
+        host = "h" * host_limit
+        return ["actor", "\t" + host + " "], ["actor", host]
     return ACCOUNTS[role]
 
 
-def grid(specification, analysis):
+def grid(specification, tag, analysis):
     spec = specification["definerFinite"]
     roles = [role for role in spec["roles"] if analysis or role not in spec["analysisOnly"]]
     yield from product(spec["algorithm"], spec["security"], roles)
     edges = spec["widthWitnesses"]
     for role in edges["roles"]:
         yield edges["algorithm"], edges["security"], role
+    if not analysis or limits(tag)[1] == 255:
+        for role in spec["additionalWidths"]["bothDirectAndModernAnalysis"]:
+            yield edges["algorithm"], edges["security"], role
 
 
-def coordinates(specification, analysis):
+def coordinates(specification, tag, analysis):
     spec = specification["definerFinite"]
     expected = {(algorithm, security, role)
                 for role in (*SESSION, *ACCOUNTS) if analysis or role not in {"session-keyword", "session-call"}
                 for security in ("definer", "invoker") for algorithm in ("automatic", "merge")}
     expected.update({("automatic", "invoker", role)
-                     for role in ("user-maximum", "host-maximum", "user-multibyte", "host-multibyte")})
+                     for role in ("user-maximum", "host-maximum", "user-multibyte", "host-multibyte", "edge-ascii-whitespace")})
     cap = spec["identities"]["analysis" if analysis else "direct"] + spec["widthWitnesses"]["identitiesPerRoute"]
-    actual = list(grid(specification, analysis))
+    if not analysis or tag not in {"mysql-5.6.51", "mysql-5.7.44"}:
+        expected.add(("automatic", "invoker", "host-cap-with-padding"))
+        cap += 1
+    actual = list(grid(specification, tag, analysis))
     require(len(actual) == len(expected) == cap and set(actual) == expected, "mysql-definer-finite-size")
     return expected
 
@@ -87,6 +98,14 @@ def host_failures(tag):
     yield "host-at", "one@two", 1105
     if host_limit == 60:
         yield "legacy-v10-host-multibyte-original", legacy_overflow_host(), 1470
+
+
+def authored_failures(tag):
+    user_limit, host_limit = limits(tag)
+    yield "host-before-fold-overflow", ["actor", "İ" * (host_limit // 2 + 1)]
+    if host_limit == 60:
+        yield "overwide-explicit-user-padding", [" " + "u" * user_limit, "%"]
+        yield "overwide-explicit-host-padding", ["actor", "\t" + "h" * host_limit + " "]
 
 
 def diagnostic_component(component, limit):

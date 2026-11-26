@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Ir\Schema\View\ViewDefiner;
 use SqlSemantics\Platform\MySql\Model\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Model\Diagnostic\InvalidConstruction;
 
 #[CoversClass(ViewDefiner::class)]
 #[Small]
@@ -39,23 +38,11 @@ final class ViewDefinerTest extends TestCase
         self::assertSame($host, $account->host);
     }
 
-    public function testLegacyHostRejectsTheFirstByteBeyondItsLimit(): void
+    public function testOnlyEdgeAsciiWhitespaceIsTrimmed(): void
     {
-        $account = new ViewDefiner('Reader', 'a' . str_repeat('棚', 20));
+        $account = new ViewDefiner("\t\vReader\tWest\n", "\rLOCAL\u{00a0}HOST\f");
 
-        $this->expectException(InvalidConstruction::class);
-        $account->checkRelease(GrammarRelease::MySql5744);
-    }
-
-    public function testModernHostRejectsTheFirstByteBeyondItsLimit(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-        new ViewDefiner('Reader', 'a' . str_repeat('棚', 85));
-    }
-
-    public function testHostRejectsTheAccountDelimiter(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-        new ViewDefiner('Reader', 'local@host');
+        self::assertSame("Reader\tWest", $account->user);
+        self::assertSame("local\u{00a0}host", $account->host);
     }
 }

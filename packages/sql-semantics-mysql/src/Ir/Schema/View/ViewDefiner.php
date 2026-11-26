@@ -37,11 +37,12 @@ final class ViewDefiner
      */
     public function __construct(string $user, string $host = '%')
     {
-        $user = trim($user, ' ');
-        $host = trim($host, ' ');
+        $user = trim($user, " \t\r\n\v\f");
+        $host = trim($host, " \t\r\n\v\f");
         Check::input(preg_match('/\A[\x{1}-\x{FFFF}]{0,32}\z/uD', $user) === 1, 'A view definer user requires at most 32 BMP characters without NUL.');
         Check::input(preg_match('/\A[\x{1}-\x{FFFF}]*\z/uD', $host) === 1, 'A view definer host requires BMP characters without NUL.');
         Check::input(!str_contains($host, '@'), 'A view definer host cannot contain @.');
+        Check::input(strlen($host) <= 255, 'A view definer host permits at most 255 bytes.');
         $host = (new NativeLocalNames())->key($host);
         Check::input(strlen($host) <= 255, 'A view definer host permits at most 255 bytes.');
         $this->user = $user;

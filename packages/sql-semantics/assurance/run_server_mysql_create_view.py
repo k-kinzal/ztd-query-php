@@ -18,8 +18,8 @@ from sqlite_domain import RenderFault
 
 LABEL = "mysql-create-view"
 OBSERVER = "mysql_create_view_observer.php"
-CONTRACT_NAME = "mysql-create-view-v11.json"
-CONTRACT = "9842635bd016e1e05465863da3546078b73333b14882bcd31080d0ae9037d513"
+CONTRACT_NAME = "mysql-create-view-v12.json"
+CONTRACT = "7a2c8fdb56692de49ee541472de2e9226049fceb6c626c3b889ad272a45eb788"
 BASE_CONTRACT = "7465a47332cd41088ffc7ed5bc997353a35a553e8aade2c51e8392b09e904d1c"
 COMPLETE_SEEDS = True
 AXES = ("algorithm", "security", "policy", "body", "fixture")
@@ -178,7 +178,7 @@ def identities(spec, tag, analysis):
     require(len(generated_catalog) == len(catalog) == spec["checkCatalogFinite"]["identities"][direction]
             and set(generated_catalog) == catalog, "mysql-create-view-check-catalog-size", direction)
     admitted_catalog = catalog - rejected_catalog_cases(spec, tag, analysis)
-    return independent | expected | admitted_catalog | {("definer", *coordinate) for coordinate in definers.coordinates(spec, analysis)}
+    return independent | expected | admitted_catalog | {("definer", *coordinate) for coordinate in definers.coordinates(spec, tag, analysis)}
 
 
 def finite_ids(_, spec, tag):
@@ -376,6 +376,8 @@ def rejected_finite_ids(spec, tag):
     cases = [*(tuple(item) for item in spec["nativeNegative"]), ("definer", "user"), ("definer", "host")]
     limits = spec["definerLimits"]["nativeRejectionCases"]
     cases.extend(("definer", route, role) for route in limits["routes"] for role in (*limits["all"], *limits.get(tag, [])))
+    analysis = limits["analysisOnly"]
+    cases.extend(("definer", "analysis", role) for role in (*analysis["all"], *analysis.get(tag, [])))
     for route, analysis in (("analysis", True), ("direct", False)):
         cases.extend(("constant-check", route, case_[0], case_[-1]) for case_ in rejected_catalog_cases(spec, tag, analysis))
     return cases
@@ -399,6 +401,10 @@ def definer_negatives(tag):
             incoming = item if route == "direct" else request(tag, rejection_sql(item, None))
             detail = "A view definer host cannot contain @." if code == 1105 else bad_host
             yield incoming, item, {"exception": INVALID, "message": detail}
+    for role, principal in definers.authored_failures(tag):
+        item = definers.with_principal({**base, "definerNegative": ["analysis", role]}, principal)
+        detail = "An explicit MySQL definer user exceeds the native character limit of this release." if role == "overwide-explicit-user-padding" else bad_host
+        yield request(tag, rejection_sql(item, None)), item, {"exception": INVALID, "message": detail}
 
 
 def seeded(tag, seed, count):
@@ -465,7 +471,7 @@ def requests(_, tag, spec):
                 rejection = {"exception": INVALID, "message": UNWRITABLE}
             yield f"{route}/{index}", incoming, item, rejection
             end = index + 1
-        for index, (algorithm, security, role) in enumerate(definers.grid(spec, analysis), end):
+        for index, (algorithm, security, role) in enumerate(definers.grid(spec, tag, analysis), end):
             base = finite(tag, algorithm, security, "require-new", "base-all", "absent")
             authored, item = definers.finite_cases(base, role)
             incoming = request(tag, finite_sql(item, definer=definers.clause(tag, role))) if analysis else authored
