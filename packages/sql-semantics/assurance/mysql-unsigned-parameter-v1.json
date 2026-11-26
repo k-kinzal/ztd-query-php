@@ -1,0 +1,73 @@
+{
+  "revision": "SemanticsIR/mysql-unsigned-parameter/1",
+  "approval": "pending-human-review",
+  "requiredBaseline": "contract-v1.json",
+  "dialects": ["MySql"],
+  "constructors": {
+    "ParameterTarget": {
+      "type": "Binding/ParameterTarget",
+      "role": "The native integral conversion of an explicitly cast projected marker.",
+      "structure": "A closed SIGNED or UNSIGNED choice retained with the one-based parameter position.",
+      "conditions": "The marker occupies a projected scalar CAST. The owning SELECT enforces its lexical position independently of signedness. Compound arms own separate scopes and place their markers in emitted lexical order.",
+      "meaning": "Execute the selected native signed or unsigned BIGINT conversion of the supplied marker. A NULL input yields NULL. The selected cast contributes to the enclosing native compound result type.",
+      "sql": "Render CAST(? AS SIGNED) or CAST(? AS UNSIGNED) from the retained target. The optional written INTEGER suffix does not change the target."
+    }
+  },
+  "existingRoles": ["Binding/Parameter", "Binding/ProjectionMode", "Rows/Compound", "Select"],
+  "releases": ["5.6.51", "5.7.44", "8.0.44", "8.1.0", "8.2.0", "8.3.0", "8.4.7", "9.0.1", "9.1.0"],
+  "modes": ["empty", "ANSI_QUOTES"],
+  "counterexamples": [
+    {
+      "previous": "server-parameter-v6.json",
+      "sql": "SELECT CAST(? AS UNSIGNED) AS a0",
+      "obligation": "Q02",
+      "resolution": "Preserve the exact input and observe it as a valid unsigned marker. The independently justified refusal remains for cast targets outside this integer role."
+    },
+    {
+      "previous": "mysql-unsigned-casts-v3.json",
+      "sql": "SELECT CAST(? AS UNSIGNED)",
+      "obligation": "Q02",
+      "resolution": "Preserve this exact unaliased input and its native heading. Test an unsupported position of the marker inside a second cast separately."
+    }
+  ],
+  "observations": [
+    "Returned column names and positions",
+    "Native field type, explicit IR cast target and PDO representation of values",
+    "Ordered marker correspondence and bound integer or NULL inputs",
+    "Duplicate rows, NULL and native output type and values of compound arms under the release's aggregation rule"
+  ],
+  "finite": {
+    "order": ["modes", "casts", "bindings"],
+    "modes": ["empty", "ANSI_QUOTES"],
+    "casts": [["SIGNED", "SIGNED"], ["UNSIGNED", "UNSIGNED"], ["UNSIGNED", "SIGNED"], ["SIGNED", "UNSIGNED"]],
+    "bindings": [[0, null], [27, -7], [-1, 1], [-9223372036854775808, 9223372036854775807], [9223372036854775807, -9223372036854775808]],
+    "identities": 40,
+    "recovery": "Measure the profile identifier and both projected target or slot nodes. Reconcile the externally supplied binding vector and exact output labels and types. Require one observation of every independently expanded coordinate."
+  },
+  "analysis": ["prior-aliased-refusal", "prior-unaliased-refusal", "integer-suffix", "ansi-quoted-labels"],
+  "compounds": ["unsigned-unsigned", "signed-unsigned", "unsigned-signed"],
+  "semanticRule": "For the fixed signed INT64 wire inputs, the UNSIGNED cast interprets the integer as its unsigned 64-bit representation. MYSQL 5.6 and 5.7 use the ordered native signedness of the participating first arm for mixed signedness in this compound domain. Conversion to a signed result saturates a positive unsigned value above INT64_MAX. Conversion to an unsigned result saturates a negative signed value to zero. Newer MySQL releases select the native decimal type for the mixed signedness cases. The observer keeps its native value representation including numbers beyond PHP_INT_MAX.",
+  "exploration": {
+    "seeds": [8191, 13187],
+    "casesPerSeed": 32,
+    "timeoutSecondsPerRelease": 420,
+    "dimensions": ["Cast target", "Bound value", "Projection width", "Alias", "Lexical mode", "Mixed target order"]
+  },
+  "budgets": {"attemptSeconds": 15},
+  "negative": ["zero-position", "overflow-position", "unordered-slots", "marker-below-integral-conversion"],
+  "faults": ["emit-signed-for-unsigned", "substitute-marker-output", "ignore-compound-target"],
+  "properties": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "obligations": {
+    "Q01": "Restrict the parameter value to an ordered position and sealed target; reject invalid positions and unsupported marker placement.",
+    "Q02": "Check exact historical inputs and all declared direct coordinates in both modes, with independent generated values.",
+    "Q03": "Retain both marker and native result conversion at a checked compound boundary.",
+    "Q04": "Compare native prepare and execution of authored and emitted SQL with the typed parameter vector and independent numeric predictions.",
+    "Q05": "Bind the runtime graph, mode, cast selector and projection methods to the isolated PHP and staged Composer distribution."
+  },
+  "sources": [
+    "https://dev.mysql.com/doc/refman/8.4/en/prepare.html",
+    "https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html"
+  ],
+  "exclusions": [],
+  "remainingBaseline": "Other parameter types, named markers and uses in other operand positions retain their required baseline scope."
+}
