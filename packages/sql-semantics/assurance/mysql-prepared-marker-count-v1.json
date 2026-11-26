@@ -1,0 +1,70 @@
+{
+  "revision": "SemanticsIR/mysql-prepared-marker-count/1",
+  "approval": "pending-human-review",
+  "requiredBaseline": "contract-v1.json",
+  "extends": [
+    "server-parameter-v7.json",
+    "mysql-named-projected-markers-v2.json",
+    "mysql-ansi-with-v2.json"
+  ],
+  "profiles": ["mysql-5.6.51", "mysql-5.7.44", "mysql-8.0.44", "mysql-8.1.0", "mysql-8.2.0", "mysql-8.3.0", "mysql-8.4.7", "mysql-9.0.1", "mysql-9.1.0"],
+  "protocol": {
+    "maximumOccurrences": 65535,
+    "serverError": {"sqlstate": "HY000", "errno": 1390},
+    "reference": "https://dev.mysql.com/worklog/task/?id=1803",
+    "source": "sql/sql_prepare.cc in the pinned MySQL tags"
+  },
+  "counterexample": {
+    "candidate": "edb3ab210f6b55c8f6bc6eb6c3e22f0646c62683",
+    "release": "mysql-8.0.44",
+    "compound": {
+      "construction": "A balanced UNION ALL with 64 SELECT occurrences and 1024 native cast markers per occurrence",
+      "emittedSqlSha256": "6bed454fafd9b2bee97949fa60a8d79674efabb6487b5176dc02639cce549fcc",
+      "actual": "Published complete IR followed by native prepared-statement error 1390."
+    },
+    "with": {
+      "construction": "63 ordinary WITH definitions and a SELECT body, each with 1024 native cast markers",
+      "emittedSqlSha256": "a047ca99e461b7232d6bc2d8c06087b4ef1e41ec398137b248a40c7837735c03",
+      "actual": "Published complete IR followed by native prepared-statement error 1390."
+    },
+    "positive": "Replace the last marker with the signed literal 11. Both published SQL strings prepare with exactly 65535 parameters and 1024 result fields."
+  },
+  "constructors": {
+    "Select": "Count a marker once per contiguous local occurrence. Derived join inputs use the closed marker-free role. Named and anonymous projected occurrences count equally.",
+    "Compound": "Add the counts of the expanded left and right operands before publication. A shared PHP arm contributes independently at each occurrence.",
+    "LocalProjection": "Use the defining query's count. Repeating a field in the consumer contributes zero occurrences.",
+    "WithProjection": "Add every definition in the lexical prefix and the final body. Unused definitions are printed and contribute their full counts. Nested WITH and local definitions contribute their recursive counts.",
+    "WithRead": "A resolved slot read contributes no independent marker. Its definition has already contributed in the enclosing prefix."
+  },
+  "conditions": "Both the set and WITH constructors reject the first aggregate count greater than 65535. Where a form and width otherwise belong to the checked profile, this condition permits every count through 65535. Each admitted parameter produces exactly one question-mark token in native SQL. Counting derives from the typed graph and uses the same SQL occurrence boundaries as rendering.",
+  "observations": [
+    "Actual PHP statement role, resolved checked occurrences and exact covered construction boundary.",
+    "Native prepare parameter count and result field count at adjacent input counts. Echo and compare native SQL digests.",
+    "At small composition sizes also exercise named and anonymous marker order, values, native types and result names through the independently checked named marker domain."
+  ],
+  "finite": {
+    "statement": ["modern-balanced-compound", "modern-ordinary-with", "modern-nested-with"],
+    "total": [65534, 65535, 65536],
+    "order": ["statement", "total"],
+    "additional": "Legacy supported compositions cannot reach 65535 within their checked depth and width. Retain complete small legacy coverage from the bound parameter and named marker domains.",
+    "recovery": "Recover the two axes from the externally scheduled graph, accepted render protocol response or exact rejection, and the independently rendered native adjacency reference. Require every coordinate exactly once."
+  },
+  "faults": [
+    "Remove the compound marker limit.",
+    "Remove the ordinary WITH marker limit.",
+    "Omit marker counts from unused definitions.",
+    "Replace expanded compound counts with one count per shared object.",
+    "Count the WITH marker again when a local binding is read."
+  ],
+  "requirements": ["P01", "P02", "P03", "P04", "P05", "P06"],
+  "obligations": {
+    "Q01": "Verify the upper bound through the closed public composition routes and precise negative boundary samples.",
+    "Q02": "Verify the adjacent valid counts in the unchanged composition domain.",
+    "Q03": "Check the finite-graph count by induction over the structural cases and confirm expansions in the actual PHP renderer and selected native prepare protocol.",
+    "Q04": "Compare native prepared parameter and result arity for the boundary cases. Use the independently observed typed row and binding cases for ordering and values.",
+    "Q05": "Pin the source forms that derive the count, enforce the boundary and emit a single marker per stored occurrence. Connect native and installed observations to the exact release bytes."
+  },
+  "budgets": {"attemptSeconds": 90, "releaseSeconds": 900},
+  "exclusions": [],
+  "remainingBaseline": "The supported local projection width has additional gaps independent of the statement-wide protocol limit. A direct 1025-marker top-level SELECT prepares on 8.0.44 and 8.2.0 but is refused by the candidate's local position bound. Larger native projection and component width obligations stay open."
+}
