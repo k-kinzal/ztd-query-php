@@ -394,10 +394,11 @@ def replay_fault(rule, record):
 def faults(_, tag):
     root = "sql-semantics-mysql/src/Ir/Rows/With/"
     specimen = finite(tag, 2, "rotate", "last", "quoted")
+    verbatim = verbatim_finite(tag, BACKSLASH_FREE, r"a\nb", True, "rotate")
     _, invalid, reason = next(negatives(tag, specifications()[0]))
     return [
-        RenderFault("detach-with-mode", root + "WithProjection.php", "$this->mode->value", "'empty'", specimen,
-                    "mysql-ansi-with-profile"),
+        RenderFault("detach-with-mode", "sql-semantics-mysql/src/Ir/SelectSql.php", "new self($select->mode)",
+                    "new self(ProjectionMode::Empty)", verbatim, "meaning-mismatch"),
         RenderFault("skip-with-profile-matching", root + "WithScope.php", "$query->profileId() === $profile", "true",
                     {"boundary": reason}, "mysql-ansi-with-mixed-mode-published", invalid),
         RenderFault("substitute-definition-ordinal", root + "WithSql.php", "$this->name($query->definition)",
