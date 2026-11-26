@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
+use SqlSemantics\Platform\PostgreSql\Model\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Model\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Model\Rendering\Output;
+use SqlSemantics\Platform\PostgreSql\Model\Resolution\Environment;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName;
-use SqlSemantics\Platform\PostgreSql\Model\Statement\Node;
 use SqlSemantics\Platform\PostgreSql\Model\Statement\Snapshot;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
+use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 
 /**
@@ -28,7 +30,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
  *     $create = (new \SqlSemantics\Platform\PostgreSql\Semantics())->analyze('CREATE TABLE t (x) USING heap WITH (fillfactor = 50) TABLESPACE s AS SELECT 1');
  *     [$create->statement->target->columns[0]->value, $create->statement->target->method->value] // => ['x', 'heap']
  */
-final class CreateTarget implements Node
+final class CreateTarget implements Clause
 {
     use Snapshot;
 
@@ -60,6 +62,16 @@ final class CreateTarget implements Node
     ) {
         $this->columns = Check::listOf($columns, Name::class, 'Column names are names.');
         $this->options = Check::listOf($options, Definition::class, 'Storage parameters are definitions.');
+    }
+
+    /**
+     * Derives the storage parameters.
+     */
+    public function deriveClause(Derivation $derivation, Environment $environment): void
+    {
+        foreach ($this->options as $option) {
+            $option->deriveClause($derivation, $environment);
+        }
     }
 
     /**

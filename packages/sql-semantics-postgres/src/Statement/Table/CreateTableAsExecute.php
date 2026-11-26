@@ -49,10 +49,11 @@ final class CreateTableAsExecute implements Statement
     }
 
     /**
-     * Derives the EXECUTE statement and provides the declaration of the table.
+     * Derives the target options and EXECUTE statement and provides the declaration of the table.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->target->deriveClause($derivation, $derivation->environment());
         $derivation->member($this->execute);
         (new CreationSchemas())->check($derivation, $this->target->name, $this->persistence);
         $name = (new QueryTables())->name($this->target->name, $this->persistence, null);

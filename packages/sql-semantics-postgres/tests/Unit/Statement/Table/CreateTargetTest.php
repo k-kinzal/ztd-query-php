@@ -12,6 +12,13 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class CreateTargetTest extends TestCase
 {
+    public function testDerivesStorageParameterModifiers(): void
+    {
+        $sql = 'CREATE TEMP TABLE n WITH (opt = custom_type (DEFAULT)) AS SELECT 1';
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect($sql);
+        self::assertSame($sql, $statement->toString());
+    }
+
     public function testRenderWritesTheClauseAsWritten(): void
     {
         $semantics = new \SqlSemantics\Platform\PostgreSql\Semantics();
