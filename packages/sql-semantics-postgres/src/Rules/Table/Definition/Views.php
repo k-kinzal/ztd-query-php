@@ -37,6 +37,9 @@ final class Views
     public function derive(CreateView $view, Derivation $derivation, ?Name $schema): void
     {
         $environment = $derivation->environment();
+        foreach ($view->options as $option) {
+            $option->deriveClause($derivation, $environment);
+        }
         if ($view->recursive && $view->name->schema === null) {
             $environment = new Environment($environment->context, null, [], [new CommonBinding($view->name->name, $view, new RowShape([]))]);
         }

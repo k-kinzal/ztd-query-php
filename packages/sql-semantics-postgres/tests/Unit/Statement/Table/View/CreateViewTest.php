@@ -80,4 +80,11 @@ final class CreateViewTest extends TestCase
         $this->expectExceptionMessage('A query ending in IS JSON without a uniqueness clause would take WITH CHECK OPTION; group it.');
         new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('v')), $query, checkOption: \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CheckOption::Local);
     }
+
+    public function testDerivesViewOptionModifiers(): void
+    {
+        $sql = 'CREATE VIEW v WITH (opt = custom_type (2)) AS SELECT 1';
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect($sql);
+        self::assertSame($sql, $statement->toString());
+    }
 }

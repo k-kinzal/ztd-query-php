@@ -38,4 +38,11 @@ final class CreateMaterializedViewTest extends TestCase
         $this->expectExceptionMessage('A query ending in IS JSON without a uniqueness clause would take WITH DATA; group it.');
         new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateMaterializedView(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\QualifiedName(new \SqlSemantics\Platform\PostgreSql\Model\Statement\Identifier\Name('m')), $query, withData: true);
     }
+
+    public function testDerivesStorageParameterModifiers(): void
+    {
+        $sql = 'CREATE MATERIALIZED VIEW m WITH (opt = custom_type (2)) AS SELECT 1';
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect($sql);
+        self::assertSame($sql, $statement->toString());
+    }
 }

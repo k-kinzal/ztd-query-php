@@ -28,4 +28,11 @@ final class CreateTableAsExecuteTest extends TestCase
         $statement = $semantics->analyze('CREATE TEMP TABLE IF NOT EXISTS n (x) AS EXECUTE q (1, 2) WITH DATA', []);
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS n (x) AS EXECUTE q (1, 2) WITH DATA', $statement->toString());
     }
+
+    public function testDerivesStorageParameterModifiers(): void
+    {
+        $sql = 'CREATE TABLE n WITH (opt = custom_type (2)) AS EXECUTE q (1)';
+        $statement = (new \SqlSemantics\Platform\PostgreSql\Semantics())->inspect($sql);
+        self::assertSame($sql, $statement->toString());
+    }
 }

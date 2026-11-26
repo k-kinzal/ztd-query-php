@@ -78,11 +78,15 @@ final class CreateMaterializedView implements Statement
     }
 
     /**
-     * Derives the query and provides the declaration of the view.
+     * Derives the options and query and provides the declaration of the view.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $fact = $derivation->query($this->query, $derivation->environment());
+        $environment = $derivation->environment();
+        foreach ($this->options as $option) {
+            $option->deriveClause($derivation, $environment);
+        }
+        $fact = $derivation->query($this->query, $environment);
         $rules = new QueryTables();
         (new CreationSchemas())->check($derivation, $this->name, $this->unlogged ? Persistence::Unlogged : Persistence::Permanent);
         $derivation->declare($rules->table($derivation, $rules->name($this->name, Persistence::Permanent, null), $fact, $this->columns, RelationKind::MaterializedView));

@@ -56,11 +56,13 @@ final class CreateTableAs implements Statement
     }
 
     /**
-     * Derives the query and provides the declaration of its table.
+     * Derives the target options and query and provides the declaration of the table.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $fact = $derivation->query($this->query, $derivation->environment());
+        $environment = $derivation->environment();
+        $this->target->deriveClause($derivation, $environment);
+        $fact = $derivation->query($this->query, $environment);
         $rules = new QueryTables();
         (new CreationSchemas())->check($derivation, $this->target->name, $this->persistence);
         $derivation->declare($rules->table($derivation, $rules->name($this->target->name, $this->persistence, null), $fact, $this->target->columns, RelationKind::BaseTable));
